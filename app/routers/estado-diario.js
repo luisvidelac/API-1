@@ -256,7 +256,7 @@ router.post("/obtener_estado", async(req, res) => {
         }*/
         const causas = await causaModel.find(consulta);
         for await (const causa of causas) {
-            retorno.push({ Detalle: causa.Detalle, Rol: causa.Rol, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
+            retorno.push({ Detalle: causa.Detalle, Rol: causa.Rol, Fecha: causa.Fecha, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
         }
         return retorno;
     }
