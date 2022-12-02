@@ -30,10 +30,10 @@ app.get('/*', (req, res) => {
 });
 
 app.post('/*', (req, res) => {
-    res.status(401).send('acceso no autorizado')
+    res.status(401).send('acceso no autorizado');
 });
 
-mongoose.connect("mongodb://localhost:27017/acmedb", { useNewUrlParser: true })
+mongoose.connect("mongodb://localhost:27017/pdj", { useNewUrlParser: true })
     .then(() => {
         console.log('mongo conectado');
     });
