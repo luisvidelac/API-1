@@ -6,8 +6,7 @@
 npm install 
 ```
 
-
-## Mongo String de Conexion
+## Mongo String de Conexión
 
 ```javascript
 mongoose.connect("mongodb://localhost:27017/pdj", { useNewUrlParser: true })
@@ -15,7 +14,6 @@ mongoose.connect("mongodb://localhost:27017/pdj", { useNewUrlParser: true })
         console.log('mongo conectado');
     });
 ```
-
 
 ## Ejecución
 
