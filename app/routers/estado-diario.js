@@ -123,7 +123,7 @@ router.post("/obtener_estado", async(req, res) => {
                         await insertUpdateCausas(result);
                         causas = causas.concat(result);
                         await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + (result.length + 1) + ') > td > nav > ul');
-                        await page.evaluate(function(num) {
+                        await page.evaluate(async(num) => {
                             pagina(num + 1, 3);
                         }, num);
 
@@ -414,7 +414,7 @@ router.post("/obtener_estado", async(req, res) => {
                     rowpage = await getCausas(page, causaTitle, num, usuario);
                     causas = causas.concat(rowpage);
                     await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + (rowpage.length + 1) + ') > td > nav > ul');
-                    await page.evaluate(function(num) {
+                    await page.evaluate(async(num) => {
                         pagina(num + 1, 3);
                     }, num);
 
@@ -511,7 +511,7 @@ router.post("/obtener_estado", async(req, res) => {
                     throw error;
                 }
                 if (!await validateLogin(page)) {
-                    await page.evaluate(function(num) {
+                    await page.evaluate(async(num) => {
                         pagina(num + 1, 3);
                     }, num);
                     continue;
@@ -569,7 +569,7 @@ router.post("/obtener_estado", async(req, res) => {
                     }
                     try {
                         if (!await validateLogin(page)) {
-                            await page.evaluate(function(num) {
+                            await page.evaluate(async(num) => {
                                 pagina(num, 3);
                             }, num);
                             continue;
