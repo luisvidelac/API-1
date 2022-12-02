@@ -3,7 +3,7 @@
 ## Instalación
 
 ```bash
-npm install 
+npm install o npm i
 ```
 
 ## Mongo String de Conexión
@@ -15,11 +15,21 @@ mongoose.connect("mongodb://localhost:27017/pdj", { useNewUrlParser: true })
     });
 ```
 
-## Ejecución
+## Ejecución Normal
 
 ```bash
 npm start 
 ```
+
+## Ejecución con PM2
+```bash
+npm i -g pm2
+pm2 start index.js
+pm2 startup
+pm2 save
+```
+
+
 
 ## Resumen APIs
 
