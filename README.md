@@ -6,7 +6,7 @@
 npm install o npm i
 ```
 
-## variables de entorno .env
+## Variables de entorno .env
 
 ```javascript
 .env
@@ -38,7 +38,7 @@ npm start
 ## Ejecución con PM2
 ```bash
 npm i -g pm2
-pm2 start index.js
+pm2 start index.js --name pdj
 pm2 startup
 pm2 save
 ```
