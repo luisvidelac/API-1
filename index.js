@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const app = express();
 const path = require("path");
 const config = require("./app/config");
+require('dotenv').config();
 
 const estadoDiario = require("./app/routers/estado-diario");
 const consulta = require("./app/routers/consulta-diario");
@@ -33,11 +34,11 @@ app.post('/*', (req, res) => {
     res.status(401).send('acceso no autorizado');
 });
 
-mongoose.connect("mongodb://localhost:27017/pdj", { useNewUrlParser: true })
+mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true })
     .then(() => {
-        console.log('mongo conectado');
+        console.log('mongo conectado:', process.env.MONGO_URL);
     });
 
-app.listen(config.port, () => {
-    console.log('app up!');
+app.listen(process.env.PORT, () => {
+    console.log('app up! port:', process.env.PORT);
 })

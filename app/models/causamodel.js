@@ -7,7 +7,7 @@ const schema = mongoose.Schema({
     Caratulado: String,
     Tribunal: String,
     created_at: { type: Date },
-    updated_at: { type: Date, required: true, default: Date.now },
+    updated_at: { type: Date, required: true, default: '01/01/1990' },
     cuadernos: [],
     uuid: String,
     usuario: String

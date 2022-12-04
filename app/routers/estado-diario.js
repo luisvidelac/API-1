@@ -50,7 +50,7 @@ router.post("/obtener_estado", async(req, res) => {
     } else if (peticion.fecha.getDay() === 0) {
         resta = -2;
     }
-    peticion.fecha = join(sumarDias(peticion.fecha, resta), a, config.separatorDate);
+    peticion.fecha = formatDate(sumarDias(peticion.fecha, resta), config.separatorDate);
 
     const start = process.hrtime();
 
@@ -73,6 +73,121 @@ router.post("/obtener_estado", async(req, res) => {
     });
 
     try {
+
+        await cargaPaginaPrincipal(page);
+
+        const rows = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
+        //let rows = await page.$$('#verDetalleEstDiaCivil > tr');
+
+        let causas = [];
+        let paginas = 0;
+        let causaTitle = [];
+        if (rows > 1) {
+
+            let obj = await obtenerCausas(page, usuario, true);
+            causas = obj.causas;
+            paginas = obj.paginas;
+            causaTitle = obj.causaTitle;
+
+            await page.setDefaultTimeout(config.maxTimeout);
+            await page.setDefaultNavigationTimeout(config.maxTimeout);
+
+            causas = await getCausasBD(peticion.usuario);
+
+            causas = await getCausasModal(page, causas, paginas, causaTitle, peticion.usuario);
+
+            //await insertUpdateCausas(causas);
+
+            await deepReplace(causas, 'url');
+
+        }
+
+        const end = parseHrtimeToSeconds(process.hrtime(start))
+        console.info(`Tiempo de ejecución ${end} ms`);
+
+        await page.evaluate(function() {
+            salir();
+        });
+        await browser.close();
+        res.json({
+            status: 200,
+            msg: `OK`,
+            data: causas
+        })
+
+    } catch (error) {
+        await page.screenshot({ path: './error.png', fullPage: true })
+        console.log("error en principal:", error);
+        if (page.url() != config.targeturi) {
+            await page.evaluate(function() {
+                salir();
+            });
+        }
+        await browser.close();
+        res.json({
+            status: 500,
+            msg: `Error`,
+            data: error
+        });
+    }
+
+
+    async function obtenerCausas(page, usuario, insert) {
+        let causas = [];
+        let causaTitle = await titulosCausas(page);
+        let { cantCausas, paginas } = await cantidadPaginas(page);
+
+        console.log('cantidad de paginas:', paginas);
+        console.log('cantidad de causas:', cantCausas);
+
+        let result = [];
+        if (paginas === 1) {
+            console.log("pagina:", paginas, "de:", paginas);
+
+            result = await getCausas(page, causaTitle, paginas, usuario);
+
+            causas = causas.concat(result);
+            if (insert) {
+                await insertUpdateCausas(causas);
+            }
+        } else {
+            console.log("pagina:", 1, "de:", paginas);
+            for await (let num of asyncGenerator(paginas)) {
+                try {
+                    result = await getCausas(page, causaTitle, num, usuario);
+                    if (insert) {
+                        await insertUpdateCausas(result);
+                    }
+                    causas = causas.concat(result);
+                    await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + (result.length + 1) + ') > td > nav > ul');
+                    await page.evaluate(async(num) => {
+                        pagina(num + 1, 3);
+                    }, num);
+
+                    result = await loop(page, causaTitle, num, usuario);
+                } catch (error) {
+                    await page.screenshot({ path: './error.png', fullPage: true });
+                    //console.log("error obtenerCausas:", error);
+                    throw error;
+                }
+                console.log("pagina:", num + 1, "de:", paginas);
+
+            }
+            if (insert) {
+                await insertUpdateCausas(result);
+            }
+            causas = causas.concat(result);
+        }
+
+        console.log('causas resultantes:', causas.length);
+
+        if (cantCausas != causas.length) {
+            throw Error("no se cargaron todas las causas");
+        }
+        return { causas: causas, paginas: paginas, causaTitle: causaTitle };
+    }
+
+    async function cargaPaginaPrincipal(page) {
         let reintento = 0;
         while (true) {
             try {
@@ -96,97 +211,6 @@ router.post("/obtener_estado", async(req, res) => {
         if (reintento > 3) {
             throw Error("no se pudo conectar")
         }
-        let rows = await page.$$('#verDetalleEstDiaCivil > tr');
-
-        let causas = [];
-        if (rows.length > 1) {
-
-            let causaTitle = await titulosCausas(page);
-            let { cantCausas, paginas } = await cantidadPaginas(page);
-
-            console.log('cantidad de paginas:', paginas);
-            console.log('cantidad de causas:', cantCausas);
-
-            let result = [];
-            if (paginas === 1) {
-                console.log("pagina:", paginas, "de:", paginas);
-
-                result = await getCausas(page, causaTitle, paginas, usuario);
-
-                causas = causas.concat(result);
-                insertUpdateCausas(causas);
-            } else {
-                console.log("pagina:", 1, "de:", paginas);
-                for await (let num of asyncGenerator(paginas)) {
-                    try {
-                        result = await getCausas(page, causaTitle, num, usuario);
-                        await insertUpdateCausas(result);
-                        causas = causas.concat(result);
-                        await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + (result.length + 1) + ') > td > nav > ul');
-                        await page.evaluate(async(num) => {
-                            pagina(num + 1, 3);
-                        }, num);
-
-                        result = await loop(page, causaTitle, num, usuario);
-                    } catch (error) {
-                        await page.screenshot({ path: './error.png', fullPage: true });
-                        console.log(error);
-                        throw error;
-                    }
-                    console.log("pagina:", num + 1, "de:", paginas);
-
-                }
-                await insertUpdateCausas(result);
-                causas = causas.concat(result);
-            }
-
-            console.log('causas resultantes:', causas.length);
-
-            if (cantCausas != causas.length) {
-                throw Error("no se cargaron todas las causas");
-            }
-
-            await page.setDefaultTimeout(config.maxTimeout);
-            await page.setDefaultNavigationTimeout(config.maxTimeout);
-
-            causas = await getCausasBD(peticion.usuario);
-
-            causas = await getCausasModal(page, causas, paginas, causaTitle, peticion.usuario);
-
-            await insertUpdateCausas(causas);
-
-            await deepReplace(causas, 'url');
-
-        }
-
-        const end = parseHrtimeToSeconds(process.hrtime(start))
-        console.info(`Tiempo de ejecución ${end} ms`);
-
-        await page.evaluate(function() {
-            salir();
-        });
-        await browser.close();
-        res.json({
-            status: 200,
-            msg: `OK`,
-            data: causas
-        })
-
-    } catch (error) {
-        await page.screenshot({ path: './error.png', fullPage: true })
-        console.log(error);
-        await page.evaluate(function() {
-            salir();
-        });
-        await browser.close();
-        res.json({
-            status: 500,
-            msg: `Error`,
-            data: error.message
-        })
-
-    } finally {
-        return;
     }
 
     async function insertUpdateCausas(causas) {
@@ -246,19 +270,36 @@ router.post("/obtener_estado", async(req, res) => {
 
 
     async function getCausasBD(usuario) {
-        retorno = [];
-        let consulta = {};
-        if (usuario) {
-            consulta['usuario'] = usuario;
+        const retorno = [];
+        try {
+
+            let yourDate = new Date();
+            const offset = yourDate.getTimezoneOffset()
+            yourDate = new Date(yourDate.getTime() - (offset * 60 * 1000))
+            let fechaAct = yourDate.toISOString().split('T')[0];
+            let consulta = {
+                usuario: usuario,
+                "$where": "this.updated_at.toJSON().slice(0, 10) != '" + fechaAct + "'"
+            };
+            /*if (usuario) {
+                consulta['usuario'] = usuario;
+            }*/
+
+            /*if (where) {
+                consulta['$where'] = "this.cuadernos.length === 0";
+            }*/
+
+            const causas = await causaModel.find(consulta);
+
+
+            for await (const causa of causas) {
+                retorno.push({ Detalle: causa.Detalle, Rol: causa.Rol, Fecha: causa.Fecha, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
+            }
+            return retorno;
+        } catch (error) {
+            console.log(error);
+            throw error;
         }
-        /*if (where) {
-            consulta['$where'] = "this.cuadernos.length === 0";
-        }*/
-        const causas = await causaModel.find(consulta);
-        for await (const causa of causas) {
-            retorno.push({ Detalle: causa.Detalle, Rol: causa.Rol, Fecha: causa.Fecha, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
-        }
-        return retorno;
     }
 
     async function validateLogin(page) {
@@ -395,40 +436,9 @@ router.post("/obtener_estado", async(req, res) => {
         }
     }
 
-    async function refreshDetalle(page, paginas, causaTitle, usuario, dataRows, result) {
-        let rowpage = [];
-        let causas = [];
-        if (paginas === 1) {
-            console.log("pagina:", paginas, "de:", paginas);
+    async function refreshDetalle(page, usuario, dataRows, result) {
+        let { causas } = await obtenerCausas(page, usuario, false);
 
-            rowpage = await getCausas(page, causaTitle, paginas, usuario);
-
-            causas = causas.concat(rowpage);
-
-
-        } else {
-            console.log("pagina:", 1, "de:", paginas);
-            for await (let num of asyncGenerator(paginas)) {
-                try {
-
-                    rowpage = await getCausas(page, causaTitle, num, usuario);
-                    causas = causas.concat(rowpage);
-                    await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + (rowpage.length + 1) + ') > td > nav > ul');
-                    await page.evaluate(async(num) => {
-                        pagina(num + 1, 3);
-                    }, num);
-
-                    rowpage = await loop(page, causaTitle, num, usuario);
-                } catch (error) {
-                    await page.screenshot({ path: './error.png', fullPage: true });
-                    console.log(error);
-                    throw error;
-                }
-                console.log("pagina:", num + 1, "de:", paginas);
-
-            }
-            causas = causas.concat(rowpage);
-        }
         const retorno = [];
         for await (let causa of result) {
             let procesado = dataRows.filter(c => c.Rol === causa.Rol && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
@@ -471,7 +481,7 @@ router.post("/obtener_estado", async(req, res) => {
                 });
                 await loadEstadoDiario(page);
                 await consultaEstadoDiario(page);
-                result = await refreshDetalle(page, paginas, causaTitle, usuario, dataRows, result);
+                result = await refreshDetalle(page, paginas, dataRows, result);
                 continue;
             }
             break;
@@ -486,31 +496,44 @@ router.post("/obtener_estado", async(req, res) => {
             try {
                 try {
                     await page.waitForSelector('#verDetalleEstDiaCivil > tr');
-                    const causasPagina = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
-                    await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > div > b', { timeout: 1000 });
+                    const causasPagina = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
+                    //const causasPagina = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
+                    await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > div > b');
                     if (causasPagina > 1) {
                         let pagina = '0';
                         let element = await page.$('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > ul > li.page-item.active > span')
-                        pagina = await page.evaluate(el => el.textContent, element)
-                        if (parseInt(pagina) === (num + 1)) {
-                            retorno = await getCausas(page, causaTitle, num, usuario);
-                            break;
+                        if (element) {
+                            pagina = await page.evaluate(el => el.textContent, element)
+                            if (parseInt(pagina) === (num + 1)) {
+                                retorno = await getCausas(page, causaTitle, num, usuario);
+                                break;
+                            }
+                        } else {
+                            continue;
                         }
 
                     }
                 } catch (error) {
+                    //console.log("error en loop 1:", error);
+                    await page.screenshot({ path: './error.png', fullPage: true });
                     if (page.url() === config.targeturi) {
+                        //console.log("error en loop 2:", page.url());
                         throw error;
                     }
                     continue;
                 }
             } catch (error) {
+                //console.log("error en loop 3:", error);
                 await page.screenshot({ path: './error.png', fullPage: true });
                 reintento++;
                 if (reintento > 3) {
                     throw error;
                 }
                 if (!await validateLogin(page)) {
+                    await page.waitForSelector('#verDetalleEstDiaCivil > tr');
+                    //const causasPagina = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
+                    const causasPagina = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
+                    await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > ul');
                     await page.evaluate(async(num) => {
                         pagina(num + 1, 3);
                     }, num);
@@ -547,7 +570,7 @@ router.post("/obtener_estado", async(req, res) => {
 
                     }
 
-                    await page.waitForSelector('#verDetalleEstDiaCivil > tr', { visible: true });
+                    await page.waitForSelector('#verDetalleEstDiaCivil > tr');
                     result = await page.$$eval('#verDetalleEstDiaCivil > tr', rows => {
                         return Array.from(rows, row => {
                             const columns = row.querySelectorAll('td');
@@ -563,18 +586,26 @@ router.post("/obtener_estado", async(req, res) => {
                     });
                     break;
                 } catch (error) {
+                    await page.screenshot({ path: './error.png', fullPage: true });
+                    //console.log("error en getCausas 1:", error);
                     reintento++;
                     if (reintento > 3) {
                         throw error;
                     }
                     try {
                         if (!await validateLogin(page)) {
+                            await page.waitForSelector('#verDetalleEstDiaCivil > tr');
+                            //const causasPagina = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
+                            const causasPagina = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
+                            await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > ul');
                             await page.evaluate(async(num) => {
                                 pagina(num, 3);
                             }, num);
                             continue;
                         };
                     } catch (error) {
+                        await page.screenshot({ path: './error.png', fullPage: true });
+                        //console.log("error en getCausas 2:", error);
                         throw error;
                     }
 
@@ -599,7 +630,7 @@ router.post("/obtener_estado", async(req, res) => {
             //return result;
         } catch (error) {
             await page.screenshot({ path: './error.png', fullPage: true })
-            console.log("error en getCausas:", error);
+                //console.log("error en getCausas 3:", error);
             throw error;
         }
 
@@ -725,7 +756,7 @@ router.post("/obtener_estado", async(req, res) => {
             return row || [];
         } catch (error) {
             await page.screenshot({ path: './error.png', fullPage: true })
-            console.log("error en causa:", row, "error:", error);
+                //console.log("error en causa:", row, "error:", error);
             throw error;
             //await page.screenshot({ path: './error.png', fullPage: true })
             //await browser.close();
@@ -843,6 +874,7 @@ router.post("/obtener_estado", async(req, res) => {
                                     let base64encoding = await getBase64FromUrl(config.url + doc.url);
                                     let doctos = [];
                                     let docto = { uuid: uuid, url: config.url + doc.url, contentype: base64encoding.split('|')[0], base64: base64encoding.split('|')[1], Rol: detcausa.Rol, Caratulado: detcausa.Caratulado, Tribunal: detcausa.Tribunal, usuario: usuario };
+                                    docto.updated_at = Date.now();
                                     doctos.push(docto)
                                     await insertUpdateDoctos(doctos);
                                     pdfs.push({ uuid: uuid, url: config.url + doc.url })
@@ -876,14 +908,14 @@ router.post("/obtener_estado", async(req, res) => {
             return totalOptions;
         } catch (error) {
             await page.screenshot({ path: './error.png', fullPage: true })
-            console.log("error en getModalCombo:", modalSelector, "error:", error);
-            //await page.screenshot({ path: './error.png', fullPage: true })
-            //await browser.close();
-            /*res.json({
-                status: 3017,
-                msg: `OK`,
-                data: error.message
-            })*/
+                //console.log("error en getModalCombo:", modalSelector, "error:", error);
+                //await page.screenshot({ path: './error.png', fullPage: true })
+                //await browser.close();
+                /*res.json({
+                    status: 3017,
+                    msg: `OK`,
+                    data: error.message
+                })*/
             throw error;
 
         }
@@ -927,7 +959,8 @@ router.post("/obtener_estado", async(req, res) => {
 
     async function cantidadPaginas(page) {
 
-        const causas = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
+        //const causas = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
+        const causas = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
         let paginas = 0;
         let cantCausas = 0;
         if (causas > 1) {
@@ -949,13 +982,25 @@ router.post("/obtener_estado", async(req, res) => {
         return seconds;
     }
 
-    function join(t, a, s) {
+    function formatDate(date, s) {
+        return [
+            padTo2Digits(date.getDate()),
+            padTo2Digits(date.getMonth() + 1),
+            date.getFullYear(),
+        ].join(s);
+    }
+
+    function padTo2Digits(num) {
+        return num.toString().padStart(2, '0');
+    }
+
+    /*function join(t, a, s) {
         function format(m) {
             let f = new Intl.DateTimeFormat('en', m);
             return f.format(t);
         }
         return a.map(format).join(s);
-    }
+    }*/
 
     function sumarDias(fecha, dias) {
         fecha.setDate(fecha.getDate() + dias);

@@ -6,13 +6,27 @@
 npm install o npm i
 ```
 
-## Mongo String de Conexión
+## variables de entorno .env
 
 ```javascript
-mongoose.connect("mongodb://localhost:27017/pdj", { useNewUrlParser: true })
+.env
+PORT="3000"
+MONGO_URL="mongodb://localhost:27017/pdj"
+```
+
+## Mongo String de Conexión y puerto
+
+```javascript
+index.js
+mongoose.connect(process.env.PORT, { useNewUrlParser: true })
     .then(() => {
         console.log('mongo conectado');
     });
+
+app.listen(process.env.PORT, () => {
+    console.log('app up! port:', process.env.PORT);
+})
+    
 ```
 
 ## Ejecución Normal

@@ -1,5 +1,4 @@
 const config = {
-    port: 3000,
     delay: 1000,
     defTimeout: 0,
     timeout: 30000,
