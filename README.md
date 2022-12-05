@@ -38,7 +38,7 @@ npm start
 ## Ejecución con PM2
 ```bash
 npm i -g pm2
-pm2 start index.js --name pdj
+pm2 start index.js --name pjud
 pm2 startup
 pm2 save
 ```
