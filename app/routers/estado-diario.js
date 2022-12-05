@@ -92,9 +92,9 @@ router.post("/obtener_estado", async(req, res) => {
             await page.setDefaultTimeout(config.maxTimeout);
             await page.setDefaultNavigationTimeout(config.maxTimeout);
 
-            causas = await getCausasBD(peticion.usuario);
+            causas = await getCausasBD(causas);
 
-            causas = await getCausasModal(page, causas, paginas, causaTitle, peticion.usuario);
+            causas = await getCausasModal(page, causas, paginas, peticion.usuario);
 
             //await insertUpdateCausas(causas);
 
@@ -269,7 +269,7 @@ router.post("/obtener_estado", async(req, res) => {
     }
 
 
-    async function getCausasBD(usuario) {
+    async function getCausasBD(causaspdj) {
         const retorno = [];
         try {
 
@@ -278,26 +278,23 @@ router.post("/obtener_estado", async(req, res) => {
             yourDate = new Date(yourDate.getTime() - (offset * 60 * 1000))
             let fechaAct = yourDate.toISOString().split('T')[0];
             let consulta = {
-                usuario: usuario,
                 "$where": "this.updated_at.toJSON().slice(0, 10) != '" + fechaAct + "'"
             };
-            /*if (usuario) {
-                consulta['usuario'] = usuario;
-            }*/
-
             /*if (where) {
                 consulta['$where'] = "this.cuadernos.length === 0";
             }*/
 
             const causas = await causaModel.find(consulta);
 
-
             for await (const causa of causas) {
-                retorno.push({ Detalle: causa.Detalle, Rol: causa.Rol, Fecha: causa.Fecha, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
+                let bus = causaspdj.find(c => c.Rol === causa.Rol && c.Fecha === causa.Fecha && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
+                if (bus) {
+                    retorno.push({ Detalle: causa.Detalle, Rol: causa.Rol, Fecha: causa.Fecha, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
+                }
             }
             return retorno;
         } catch (error) {
-            console.log(error);
+            console.log("error getCausasBD:", error);
             throw error;
         }
     }
@@ -379,6 +376,8 @@ router.post("/obtener_estado", async(req, res) => {
             } catch (error) {
                 reintento++;
                 if (reintento > 3) {
+                    console.log('error loadEstadoDiario:'.error);
+                    await page.screenshot({ path: './error.png', fullPage: true });
                     throw error;
                 }
             }
@@ -452,7 +451,7 @@ router.post("/obtener_estado", async(req, res) => {
         return retorno;
     }
 
-    async function getCausasModal(page, result, paginas, causaTitle, usuario) {
+    async function getCausasModal(page, result, paginas, usuario) {
         let dataRows = []
         let i = 1;
         const total = result.length;
