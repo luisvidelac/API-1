@@ -11,7 +11,7 @@ npm install o npm i
 ```javascript
 .env
 PORT="3000"
-MONGO_URL="mongodb://localhost:27017/pdj"
+MONGO_URL="mongodb://localhost:27017/pjud"
 ```
 
 ## Mongo String de Conexión y puerto
