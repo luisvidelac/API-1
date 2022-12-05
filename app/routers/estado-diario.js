@@ -39,6 +39,66 @@ router.get("/*", (req, res) => {
  *          example:
  *              usuario: "12345678"
  *              password: password
+ *      Error:
+ *          type: object
+ *          properties:
+ *              status:
+ *                  type: number
+ *                  description: status
+ *              msg:
+ *                  type: string
+ *                  description: mensaje de error
+ *              data:
+ *                  type: string
+ *                  description: descripcion del error
+ *          example:
+ *              status: 500
+ *              msg: "Error"
+ *              data: "Timeout"
+ *      Causa:
+ *          type: object
+ *          properties:
+ *              uuid:
+ *                  type: string
+ *                  description: uuid generado de la causa
+ *              Rol:
+ *                  type: string
+ *                  description: rol de la causa
+ *              Tribunal:
+ *                  type: string
+ *                  description: tribunal de la causa
+ *              Caratulado:
+ *                  type: string
+ *                  description: caratulado de la causa
+ *              usuario:
+ *                  type: string
+ *                  description: usuario que fue encontrada la causa
+ *              documentos:
+ *                  type: array
+ *                  description: documentos de la causa
+ *                  items:
+ *                      type: object
+ *          example:
+ *              uuid: "aaaa-bbbb-cccc-dddd"
+ *      Response:
+ *          type: object
+ *          properties:
+ *              status:
+ *                  type: number
+ *                  description: status OK
+ *              msg:
+ *                  type: string
+ *                  description: mensaje de OK
+ *              data:
+ *                  type: array
+ *                  description: Array de OK
+ *                  items:
+ *                      type: object
+ *                      $ref: '#components/schemas/Causa'
+ *          example:
+ *              status: 200
+ *              msg: "OK"
+ *              data: [ { uuid: "aaaa-bbbb-cccc-dddd" } ]
  */
 
 /**
@@ -46,7 +106,7 @@ router.get("/*", (req, res) => {
  * /api/estado_diario/obtener_estado:
  *  post:
  *      summary: permite obtener el estado diario de causas
- *      tags: [User]
+ *      tags: [User,Response,Error]
  *      requestBody:
  *          required: true
  *          content:
@@ -57,6 +117,18 @@ router.get("/*", (req, res) => {
  *      responses:
  *          200:
  *              description: obtiene las causas diarias
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          $ref: '#components/schemas/Response'
+ *          500:
+ *              description: Error
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          $ref: '#components/schemas/Error'
  */
 router.post("/obtener_estado", async(req, res) => {
     const peticion = req.body;

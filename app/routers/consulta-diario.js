@@ -31,11 +31,51 @@ const doctoModel = require("../models/doctomodel");
  *                  type: number
  *                  description: fecha de la api yyyymmdd
  *          example:
- *              status: 2000
+ *              status: 200
  *              version: "1.0.0"
  *              date: 20221205
+ *      Causa:
+ *          type: object
+ *          properties:
+ *              uuid:
+ *                  type: string
+ *                  description: uuid generado de la causa
+ *              Rol:
+ *                  type: string
+ *                  description: rol de la causa
+ *              Tribunal:
+ *                  type: string
+ *                  description: tribunal de la causa
+ *              Caratulado:
+ *                  type: string
+ *                  description: caratulado de la causa
+ *              usuario:
+ *                  type: string
+ *                  description: usuario que fue encontrada la causa
+ *              documentos:
+ *                  type: array
+ *                  description: documentos de la causa
+ *                  items:
+ *                      type: object
+ *          example:
+ *              uuid: "aaaa-bbbb-cccc-dddd"
+ *      Error:
+ *          type: object
+ *          properties:
+ *              status:
+ *                  type: number
+ *                  description: status
+ *              msg:
+ *                  type: string
+ *                  description: mensaje de error
+ *              data:
+ *                  type: string
+ *                  description: descripcion del error
+ *          example:
+ *              status: 500
+ *              msg: "Error"
+ *              data: "Timeout"
  */
-
 
 
 /**
@@ -50,7 +90,7 @@ const doctoModel = require("../models/doctomodel");
  *                  application/json:
  *                      schema:
  *                          type: object
- *                          $ref: '#components/schemas/Version' 
+ *                          $ref: '#components/schemas/Version'
  */
 router.get("/*", (req, res) => {
     res.json(config.version);
@@ -72,15 +112,28 @@ router.get("/*", (req, res) => {
  *      responses:
  *          200:
  *              description: Obtiene el documento con el contentype generado
+ *              content:
+ *                  application/pdf:
+ *                      schema:
+ *                          type: file
+ *                          format: binary
+ *          500:
+ *              description: Error
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          $ref: '#components/schemas/Error'
+
  */
 router.post("/obtener_documento", async(req, res) => {
     const peticion = req.body;
 
     if (!peticion.uuid || peticion.uuid.length == 0) {
         res.json({
-            status: 3011,
-            msg: "uuid es obligatorio",
-            data: []
+            status: 500,
+            msg: "Error",
+            data: "uuid es obligatorio"
         })
         return;
 
@@ -108,7 +161,7 @@ router.post("/obtener_documento", async(req, res) => {
         console.log(error);
         res.json({
             status: 500,
-            msg: `OK`,
+            msg: `Error`,
             data: error.message
         })
 
@@ -117,37 +170,6 @@ router.post("/obtener_documento", async(req, res) => {
     }
 
 })
-
-/**
- * @swagger
- * components:
- *  schemas:
- *      Causa:
- *          type: object
- *          properties:
- *              uuid:
- *                  type: string
- *                  description: uuid generado de la causa
- *              Rol: 
- *                  type: string
- *                  description: rol de la causa
- *              Tribunal:
- *                  type: string
- *                  description: tribunal de la causa
- *              Caratulado:
- *                  type: string
- *                  description: caratulado de la causa
- *              usuario:
- *                  type: string
- *                  description: usuario que fue encontrada la causa
- *              documentos:
- *                  type: array
- *                  description: documentos de la causa
- *                  items:
- *                      type: object
- *          example:
- *              uuid: "aaaa-bbbb-cccc-dddd"
- */
 
 /**
  * @swagger
@@ -171,6 +193,13 @@ router.post("/obtener_documento", async(req, res) => {
  *                          type: array
  *                          items:
  *                              $ref: '#components/schemas/Causa'
+ *          500:
+ *              description: Error
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          $ref: '#components/schemas/Error'
  */
 router.post("/obtener_causa", async(req, res) => {
     const peticion = req.body;
