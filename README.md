@@ -59,7 +59,7 @@ http://localhost:3000/api-doc
 | /api/consulta_diario/obtener_documento | POST  | Obtener el documento de una causa | uuid: id de documento obtenido de los metodos anteriores |
 |/api/version | GET | Healthcheck | sin parametros |
 
-## Ejemplos
+## Ejemplos curls
 
 curl --location --request POST 'http://localhost:3000/api/estado_diario/obtener_estado' \
 --header 'Content-Type: application/json' \
