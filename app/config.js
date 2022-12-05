@@ -10,8 +10,8 @@ const config = {
     separatorDate: '/',
     version: {
         "status": 200,
-        "version": "1.0.9.5",
-        "date": 20210610
+        "version": "1.0.0",
+        "date": 20221205
     },
     launchConf: {
         headless: true,

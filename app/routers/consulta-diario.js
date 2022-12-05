@@ -4,10 +4,75 @@ const config = require("../config");
 const causaModel = require("../models/causamodel");
 const doctoModel = require("../models/doctomodel");
 
+/**
+ * @swagger
+ * components:
+ *  schemas:
+ *      Document:
+ *          type: object
+ *          properties:
+ *              uuid:
+ *                  type: string
+ *                  description: uuid del documento
+ *          required:
+ *              - uuid
+ *          example:
+ *              uuid: "aaaa-bbbb-cccc-dddd"
+ *      Version:
+ *          type: object
+ *          properties:
+ *              status:
+ *                  type: number
+ *                  description: status de la api
+ *              version:
+ *                  type: string
+ *                  description: version de la pi
+ *              date:
+ *                  type: number
+ *                  description: fecha de la api yyyymmdd
+ *          example:
+ *              status: 2000
+ *              version: "1.0.0"
+ *              date: 20221205
+ */
+
+
+
+/**
+ * @swagger
+ * /api/version:
+ *  get:
+ *      summary: obtiene la version de la api
+ *      responses:
+ *          200:
+ *              description: Obtiene la version de la api
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          $ref: '#components/schemas/Version' 
+ */
 router.get("/*", (req, res) => {
     res.json(config.version);
 });
 
+/**
+ * @swagger
+ * /api/consulta_diario/obtener_documento:
+ *  post:
+ *      summary: permite obtener un documento
+ *      tags: [Document]
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      $ref: '#components/schemas/Document'
+ *      responses:
+ *          200:
+ *              description: Obtiene el documento con el contentype generado
+ */
 router.post("/obtener_documento", async(req, res) => {
     const peticion = req.body;
 
@@ -53,6 +118,60 @@ router.post("/obtener_documento", async(req, res) => {
 
 })
 
+/**
+ * @swagger
+ * components:
+ *  schemas:
+ *      Causa:
+ *          type: object
+ *          properties:
+ *              uuid:
+ *                  type: string
+ *                  description: uuid generado de la causa
+ *              Rol: 
+ *                  type: string
+ *                  description: rol de la causa
+ *              Tribunal:
+ *                  type: string
+ *                  description: tribunal de la causa
+ *              Caratulado:
+ *                  type: string
+ *                  description: caratulado de la causa
+ *              usuario:
+ *                  type: string
+ *                  description: usuario que fue encontrada la causa
+ *              documentos:
+ *                  type: array
+ *                  description: documentos de la causa
+ *                  items:
+ *                      type: object
+ *          example:
+ *              uuid: "aaaa-bbbb-cccc-dddd"
+ */
+
+/**
+ * @swagger
+ * /api/consulta_diario/obtener_causa:
+ *  post:
+ *      summary: permite obtener la(s) causa(s)
+ *      tags: [Causa]
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      $ref: '#components/schemas/Causa'
+ *      responses:
+ *          200:
+ *              description: Obtiene la(s) causa(s)
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: array
+ *                          items:
+ *                              $ref: '#components/schemas/Causa'
+ */
 router.post("/obtener_causa", async(req, res) => {
     const peticion = req.body;
 

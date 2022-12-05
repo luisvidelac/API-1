@@ -7,8 +7,31 @@ require('dotenv').config();
 
 const estadoDiario = require("./app/routers/estado-diario");
 const consulta = require("./app/routers/consulta-diario");
+const { application } = require("express");
 
-app.use(express.json())
+const swaggerUI = require("swagger-ui-express");
+const swaggerJsDoc = require("swagger-jsdoc");
+
+const swaggerSpec = {
+    definition: {
+        openapi: "3.0.0",
+        info: {
+            title: "PDJ API",
+            version: "1.0.0",
+
+        },
+        servers: [{
+            url: "http://localhost:3000"
+        }]
+    },
+    apis: [`${path.join(__dirname, "./app/routers/*.js")}`
+
+    ]
+};
+
+app.use(express.json());
+
+app.use("/api-doc", swaggerUI.serve, swaggerUI.setup(swaggerJsDoc(swaggerSpec)));
 
 // Configurar cabeceras y cors
 app.use((req, res, next) => {

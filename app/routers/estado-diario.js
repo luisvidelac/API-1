@@ -19,6 +19,45 @@ router.get("/*", (req, res) => {
     res.json(config.version);
 });
 
+// obtener estado diario
+/**
+ * @swagger
+ * components:
+ *  schemas:
+ *      User:
+ *          type: object
+ *          properties:
+ *              usuario:
+ *                  type: string
+ *                  description: Usuario PJUD
+ *              password:
+ *                  type: string
+ *                  description: Clave PJUD
+ *          required:
+ *              - usuario
+ *              - password
+ *          example:
+ *              usuario: "12345678"
+ *              password: password
+ */
+
+/**
+ * @swagger
+ * /api/estado_diario/obtener_estado:
+ *  post:
+ *      summary: permite obtener el estado diario de causas
+ *      tags: [User]
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      $ref: '#components/schemas/User'
+ *      responses:
+ *          200:
+ *              description: obtiene las causas diarias
+ */
 router.post("/obtener_estado", async(req, res) => {
     const peticion = req.body;
 
