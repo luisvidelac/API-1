@@ -47,6 +47,11 @@ pm2 save
 
 ## Resumen APIs
 
+### Documentación Swagger 
+```bash
+http://localhost:3000/api-doc
+```
+
 | API | Método  | Uso | Parámetros | 
 | ------------- | ------------- | ------------- | ------------- | 
 | /api/estado_diario/obtener_estado | POST | Obtiene las causas del día anterior | usuario: usuario pdj, password: clave pdj |
