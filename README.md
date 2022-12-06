@@ -18,7 +18,7 @@ MONGO_URL="mongodb://localhost:27017/pjud"
 
 ```javascript
 index.js
-mongoose.connect(process.env.PORT, { useNewUrlParser: true })
+mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true })
     .then(() => {
         console.log('mongo conectado');
     });
