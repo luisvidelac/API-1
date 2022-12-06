@@ -215,6 +215,7 @@ router.post("/obtener_causa", async(req, res) => {
                     "Caratulado": causa.Caratulado,
                     "Tribunal": causa.Tribunal,
                     "cuadernos": causa.cuadernos,
+                    "receptores": causa.receptores,
                     "usuario": causa.usuario,
                     "uuid": causa.uuid
                 };

@@ -9,6 +9,7 @@ const schema = mongoose.Schema({
     created_at: { type: Date },
     updated_at: { type: Date, required: true, default: '01/01/1990' },
     cuadernos: [],
+    receptores: [],
     uuid: String,
     usuario: String
 }, {

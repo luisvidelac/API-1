@@ -16,7 +16,7 @@ const swaggerSpec = {
     definition: {
         openapi: "3.0.0",
         info: {
-            title: "PDJ API",
+            title: "PJUD API",
             version: "1.0.0",
 
         },

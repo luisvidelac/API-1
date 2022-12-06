@@ -188,11 +188,9 @@ router.post("/obtener_estado", async(req, res) => {
         await cargaPaginaPrincipal(page);
 
         const rows = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
-        //let rows = await page.$$('#verDetalleEstDiaCivil > tr');
 
         let causas = [];
         let paginas = 0;
-        let causaTitle = [];
         if (rows > 1) {
 
             let obj = await obtenerCausas(page, usuario, true);
@@ -227,8 +225,8 @@ router.post("/obtener_estado", async(req, res) => {
         })
 
     } catch (error) {
-        await page.screenshot({ path: './error.png', fullPage: true })
         console.log("error en principal:", error);
+        await page.screenshot({ path: './error.png', fullPage: true })
         if (page.url() != config.targeturi) {
             await page.evaluate(function() {
                 salir();
@@ -277,8 +275,8 @@ router.post("/obtener_estado", async(req, res) => {
 
                     result = await loop(page, causaTitle, num, usuario);
                 } catch (error) {
+                    console.log("error obtenerCausas:", error);
                     await page.screenshot({ path: './error.png', fullPage: true });
-                    //console.log("error obtenerCausas:", error);
                     throw error;
                 }
                 console.log("pagina:", num + 1, "de:", paginas);
@@ -325,24 +323,28 @@ router.post("/obtener_estado", async(req, res) => {
     }
 
     async function insertUpdateCausas(causas) {
-        const causaUpdate = causas.map(causa => ({
-            updateOne: {
-                filter: {
-                    Rol: causa.Rol,
-                    Caratulado: causa.Caratulado,
-                    Tribunal: causa.Tribunal
-                },
-                update: {
-                    $set: causa,
-                    $setOnInsert: {
-                        created_at: Date.now()
-                    }
-                },
-                upsert: true
-            }
-        }));
+        try {
+            const causaUpdate = causas.map(causa => ({
+                updateOne: {
+                    filter: {
+                        Rol: causa.Rol,
+                        Caratulado: causa.Caratulado,
+                        Tribunal: causa.Tribunal
+                    },
+                    update: {
+                        $set: causa,
+                        $setOnInsert: {
+                            created_at: Date.now()
+                        }
+                    },
+                    upsert: true
+                }
+            }));
 
-        return await causaModel.bulkWrite(causaUpdate);
+            return await causaModel.bulkWrite(causaUpdate);
+        } catch (error) {
+            console.log("error en insertUpdateCausas:", error);
+        }
     }
 
     async function deleteDoctos(doctos) {
@@ -380,7 +382,7 @@ router.post("/obtener_estado", async(req, res) => {
     }
 
 
-    async function getCausasBD(causaspdj) {
+    async function getCausasBD(causaspjud) {
         const retorno = [];
         try {
 
@@ -391,14 +393,11 @@ router.post("/obtener_estado", async(req, res) => {
             let consulta = {
                 "$where": "this.updated_at.toJSON().slice(0, 10) != '" + fechaAct + "'"
             };
-            /*if (where) {
-                consulta['$where'] = "this.cuadernos.length === 0";
-            }*/
 
             const causas = await causaModel.find(consulta);
 
             for await (const causa of causas) {
-                let bus = causaspdj.find(c => c.Rol === causa.Rol && c.Fecha === causa.Fecha && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
+                let bus = causaspjud.find(c => c.Rol === causa.Rol && c.Fecha === causa.Fecha && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
                 if (bus) {
                     retorno.push({ Detalle: causa.Detalle, Rol: causa.Rol, Fecha: causa.Fecha, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
                 }
@@ -416,12 +415,6 @@ router.post("/obtener_estado", async(req, res) => {
             await loadEstadoDiario(page);
             await consultaEstadoDiario(page);
             return false;
-            /*} else {
-                await page.evaluate(() => {
-                    location.reload(true)
-                });
-                await loadEstadoDiario(page);
-                await consultaEstadoDiario(page);*/
         }
         return true;
     }
@@ -445,24 +438,6 @@ router.post("/obtener_estado", async(req, res) => {
         await page.waitForSelector('#btnSegundaClaveIngresar')
         await page.click('#btnSegundaClaveIngresar')
 
-        /*
-        await page.waitForSelector('#myDropdown > a:nth-child(1)')
-        await page.click('#myDropdown > a:nth-child(1)')
-
-        await timeout(2000);
-
-        await page.waitForSelector('#uname');
-        await page.focus('#uname');
-        await page.keyboard.type('rut clave unica');
-
-        await page.waitForSelector('#pword')
-        await page.focus('#pword');
-        await page.keyboard.type('pass word clave unica');
-
-        await page.waitForSelector('#login-submit')
-        await page.click('#login-submit')
-        await timeout(5000);
-*/
     }
 
     async function loadEstadoDiario(page) {
@@ -624,30 +599,40 @@ router.post("/obtener_estado", async(req, res) => {
 
                     }
                 } catch (error) {
-                    //console.log("error en loop 1:", error);
+                    console.log("error en loop 1:", error);
                     await page.screenshot({ path: './error.png', fullPage: true });
                     if (page.url() === config.targeturi) {
-                        //console.log("error en loop 2:", page.url());
+                        console.log("error en loop 2:", page.url());
                         throw error;
                     }
                     continue;
                 }
             } catch (error) {
-                //console.log("error en loop 3:", error);
+                console.log("error en loop 3:", error);
                 await page.screenshot({ path: './error.png', fullPage: true });
                 reintento++;
                 if (reintento > 3) {
                     throw error;
                 }
                 if (!await validateLogin(page)) {
-                    await page.waitForSelector('#verDetalleEstDiaCivil > tr');
-                    //const causasPagina = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
-                    const causasPagina = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
-                    await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > ul');
-                    await page.evaluate(async(num) => {
-                        pagina(num + 1, 3);
-                    }, num);
-                    continue;
+                    try {
+                        await page.waitForSelector('#verDetalleEstDiaCivil > tr');
+                        //const causasPagina = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
+                        const causasPagina = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
+                        await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > ul');
+                        await page.evaluate(async(num) => {
+                            pagina(num + 1, 3);
+                        }, num);
+                        continue;
+                    } catch (error) {
+                        console.log("error en loop 4:", error);
+                        await page.screenshot({ path: './error.png', fullPage: true });
+                        reintento++;
+                        if (reintento > 3) {
+                            throw error;
+                        }
+                        continue;
+                    }
                 };
             }
         }
@@ -696,26 +681,35 @@ router.post("/obtener_estado", async(req, res) => {
                     });
                     break;
                 } catch (error) {
+                    console.log("error en getCausas 1:", error);
                     await page.screenshot({ path: './error.png', fullPage: true });
-                    //console.log("error en getCausas 1:", error);
                     reintento++;
                     if (reintento > 3) {
                         throw error;
                     }
                     try {
                         if (!await validateLogin(page)) {
-                            await page.waitForSelector('#verDetalleEstDiaCivil > tr');
-                            //const causasPagina = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
-                            const causasPagina = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
-                            await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > ul');
-                            await page.evaluate(async(num) => {
-                                pagina(num, 3);
-                            }, num);
-                            continue;
+                            try {
+                                await page.waitForSelector('#verDetalleEstDiaCivil > tr');
+                                //const causasPagina = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
+                                const causasPagina = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
+                                await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > ul');
+                                await page.evaluate(async(num) => {
+                                    pagina(num, 3);
+                                }, num);
+                                continue;
+                            } catch (error) {
+                                console.log("error en getCausas 2:", error);
+                                await page.screenshot({ path: './error.png', fullPage: true });
+                                reintento++;
+                                if (reintento > 3) {
+                                    throw error;
+                                }
+                            }
                         };
                     } catch (error) {
+                        console.log("error en getCausas 3:", error);
                         await page.screenshot({ path: './error.png', fullPage: true });
-                        //console.log("error en getCausas 2:", error);
                         throw error;
                     }
 
@@ -739,8 +733,8 @@ router.post("/obtener_estado", async(req, res) => {
             return causas;
             //return result;
         } catch (error) {
+            console.log("error en getCausas 4:", error);
             await page.screenshot({ path: './error.png', fullPage: true })
-                //console.log("error en getCausas 3:", error);
             throw error;
         }
 
@@ -749,18 +743,9 @@ router.post("/obtener_estado", async(req, res) => {
     async function openRowModal(row, usuario) {
         try {
             let expirado = false;
-            //let modalData = []
-            //const selector = `#verDetalleEstDiaCivil > tr:nth-child(${i}) > td:nth-child(1) > a[onclick="${row[0]}"]`;
-
-            /*const selector = `#verDetalleEstDiaCivil > tr:nth-child(${i}) > td:nth-child(1) > a`;
-            await page.waitForSelector(selector, {
-                visible: true
-            });*/
             let intentos = 0;
 
             const modalSelector = '#modalDetalleEstDiaCivil';
-
-            //await page.click(selector);
 
             while (true) {
                 try {
@@ -800,42 +785,32 @@ router.post("/obtener_estado", async(req, res) => {
 
                     }
 
-                    /* cuando no puede abrir la causa
-
-                    await page.waitForSelector(modalSelector, {
-                        visible: true
-                    });
-                    try {
-                        await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > div.sa-button-container > div > button', { timeout: 500 });
-
-                        const selectAll = await page.$$('body > div.sweet-alert.showSweetAlert.visible > div.sa-button-container > div > button');
-                        if (selectAll.length > 0) {
-                            //await selectAll[0].click();
-                            intentos = 4;
-                            break;
-                        }
-                    } catch (error) {
-
-                    }
-
-                    */
-
-                    /* const buttonHandle = await page.$$eval(selector, buttons => Array.from(buttons, btn => btn.getAttribute("href")))
-                    const modalSelector = `${buttonHandle[0]}`
-                     
-                        await page.waitForSelector(modalSelector, {
-                            visible: true
-                        })
-                     
-                        */
                     let cuaderno = await getModalCombo(modalSelector, row, usuario);
-                    //modalData.push(cuaderno);
-                    await page.waitForSelector(`${modalSelector} button.close`, {
+                    const modalReceptor = '#modalReceptorCivil';
+                    await page.waitForSelector(`#modalDetalleEstDiaCivil > div > div > div.modal-body > div > div:nth-child(2) > table > tbody > tr > td:nth-child(2) > a > i`, {
                         visible: true
                     });
-                    await page.click(`${modalSelector} button.close`);
+
+                    await page.click(`#modalDetalleEstDiaCivil > div > div > div.modal-body > div > div:nth-child(2) > table > tbody > tr > td:nth-child(2) > a > i`);
+
+                    let receptores = await getReceptores(modalReceptor);
+
+                    await page.waitForSelector(`${modalReceptor} > div > div > div.modal-footer > button`, {
+                        visible: true
+                    });
+
+                    await page.click(`${modalReceptor} > div > div > div.modal-footer > button`);
+
+                    row['receptores'] = receptores;
+
+                    await page.waitForSelector(`${modalSelector} > div > div > div.modal-footer > button`, {
+                        visible: true
+                    });
+
+                    await page.click(`${modalSelector} > div > div > div.modal-footer > button`);
 
                     row['cuadernos'] = cuaderno;
+
                     delete row['Detalle'];
                     break;
                 } catch (error) {
@@ -880,6 +855,54 @@ router.post("/obtener_estado", async(req, res) => {
         //finally {
         //    return;
         //}
+
+    }
+
+    async function getReceptores(modal) {
+
+        let receptores = [];
+
+        try {
+            await page.waitForSelector(".imgLoad", {
+                hidden: true
+            })
+        } catch (error) {
+
+        }
+
+        try {
+            await page.waitForSelector(`${modal} > div > div > div.modal-body > div > div > div > center > div`, {
+                visible: true,
+                timeout: 5000
+            });
+            return receptores;
+        } catch (error) {
+            await page.waitForSelector(`${modal} > div > div > div.modal-body > div > div > div > table > tbody > tr`, {
+                visible: true,
+                timeout: 5000
+            });
+
+            const titleReceptores = await titulosReceptores(page);
+            let rowsReceptores = await page.$$eval(`${modal} > div > div > div.modal-body > div > div > div > table > tbody > tr`, rows => {
+                return Array.from(rows, row => {
+                    const columns = row.querySelectorAll('td');
+                    return Array.from(columns, col => {
+                        return col.innerText.trim()
+                    })
+                });
+            });
+
+            for await (const receptor of rowsReceptores) {
+                let obj = {};
+                for await (const [i, title] of titleReceptores.entries()) {
+                    obj[title] = receptor[i];
+                }
+                if (Object.values(obj).length > 1) {
+                    receptores.push(obj);
+                }
+            }
+            return receptores;
+        }
 
     }
 
@@ -1018,14 +1041,6 @@ router.post("/obtener_estado", async(req, res) => {
             return totalOptions;
         } catch (error) {
             await page.screenshot({ path: './error.png', fullPage: true })
-                //console.log("error en getModalCombo:", modalSelector, "error:", error);
-                //await page.screenshot({ path: './error.png', fullPage: true })
-                //await browser.close();
-                /*res.json({
-                    status: 3017,
-                    msg: `OK`,
-                    data: error.message
-                })*/
             throw error;
 
         }
@@ -1036,6 +1051,9 @@ router.post("/obtener_estado", async(req, res) => {
         obj.forEach(async key => {
             if (key === 'cuadernos') {
                 delete obj['cuadernos'];
+            }
+            if (key === 'receptores') {
+                delete obj['receptores'];
             }
             if (key === keyName) {
                 delete obj['contentype'];
@@ -1104,14 +1122,6 @@ router.post("/obtener_estado", async(req, res) => {
         return num.toString().padStart(2, '0');
     }
 
-    /*function join(t, a, s) {
-        function format(m) {
-            let f = new Intl.DateTimeFormat('en', m);
-            return f.format(t);
-        }
-        return a.map(format).join(s);
-    }*/
-
     function sumarDias(fecha, dias) {
         fecha.setDate(fecha.getDate() + dias);
         return fecha;
@@ -1127,6 +1137,16 @@ router.post("/obtener_estado", async(req, res) => {
             for (let i = 2; i <= titleLength; i++) {
                 titles.push(await page.evaluate(el => el.innerText, await page.$(`#thTableEstDiaCivil > tr > th:nth-child(${i})`)));
             }
+        }
+        return titles;
+    }
+
+    async function titulosReceptores(page) {
+        await page.waitForSelector('#modalReceptorCivil > div > div > div.modal-body > div > div > div > table > thead > tr', { visible: true });
+        const titleLength = await page.$$eval('#modalReceptorCivil > div > div > div.modal-body > div > div > div > table > thead > tr > th', el => el.length);
+        let titles = [];
+        for (let i = 1; i <= titleLength; i++) {
+            titles.push(await page.evaluate(el => el.innerText, await page.$(`#modalReceptorCivil > div > div > div.modal-body > div > div > div > table > thead > tr > th:nth-child(${i})`)));
         }
         return titles;
     }
