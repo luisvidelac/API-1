@@ -236,7 +236,7 @@ router.post("/obtener_estado", async(req, res) => {
         res.json({
             status: 500,
             msg: `Error`,
-            data: error
+            data: error.message ? error.message : error
         });
     }
 
@@ -1108,11 +1108,7 @@ router.post("/obtener_estado", async(req, res) => {
             await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causas + ') > td > nav > div > b');
             let element = await page.$('#verDetalleEstDiaCivil > tr:nth-child(' + causas + ') > td > nav > div > b')
             cantCausas = await page.evaluate(el => el.textContent, element)
-            if (cantCausas % 15 === 0) {
-                paginas = Math.trunc(cantCausas / 15);
-            } else {
-                paginas = Math.trunc(cantCausas / 15) + 1;
-            }
+            paginas = Math.trunc(cantCausas / 15) + 1;
 
         }
         return { cantCausas: cantCausas, paginas: paginas };
