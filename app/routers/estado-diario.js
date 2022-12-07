@@ -273,7 +273,7 @@ router.post("/obtener_estado", async(req, res) => {
                         pagina(num + 1, 3);
                     }, num);
 
-                    result = await loop(page, causaTitle, num, usuario);
+                    result = await loop(page, causaTitle, num, usuario, paginas);
                 } catch (error) {
                     console.log("error obtenerCausas:", error);
                     await page.screenshot({ path: './error.png', fullPage: true });
@@ -574,7 +574,7 @@ router.post("/obtener_estado", async(req, res) => {
         return dataRows;
     }
 
-    async function loop(page, causaTitle, num, usuario) {
+    async function loop(page, causaTitle, num, usuario, totPaginas) {
         let retorno = [];
         let reintento = 0;
         while (true) {
@@ -594,6 +594,10 @@ router.post("/obtener_estado", async(req, res) => {
                                 break;
                             }
                         } else {
+                            if (causasPagina < 15) {
+                                retorno = await getCausas(page, causaTitle, num, usuario);
+                                break;
+                            }
                             continue;
                         }
 
