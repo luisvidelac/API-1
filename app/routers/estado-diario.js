@@ -785,15 +785,21 @@ router.post("/obtener_estado", async(req, res) => {
 
                     }
 
-                    let cuaderno = await getModalCombo(modalSelector, row, usuario);
-                    const modalReceptor = '#modalReceptorCivil';
+                    await timeout(500);
+
                     await page.waitForSelector(`#modalDetalleEstDiaCivil > div > div > div.modal-body > div > div:nth-child(2) > table > tbody > tr > td:nth-child(2) > a > i`, {
                         visible: true
                     });
 
                     await page.click(`#modalDetalleEstDiaCivil > div > div > div.modal-body > div > div:nth-child(2) > table > tbody > tr > td:nth-child(2) > a > i`);
 
+                    await timeout(500);
+
+                    const modalReceptor = '#modalReceptorCivil';
+
                     let receptores = await getReceptores(modalReceptor);
+
+                    await timeout(500);
 
                     await page.waitForSelector(`${modalReceptor} > div > div > div.modal-footer > button`, {
                         visible: true
@@ -802,6 +808,12 @@ router.post("/obtener_estado", async(req, res) => {
                     await page.click(`${modalReceptor} > div > div > div.modal-footer > button`);
 
                     row['receptores'] = receptores;
+
+                    await timeout(500);
+
+                    let cuaderno = await getModalCombo(modalSelector, row, usuario);
+
+                    await timeout(1000);
 
                     await page.waitForSelector(`${modalSelector} > div > div > div.modal-footer > button`, {
                         visible: true
@@ -812,6 +824,7 @@ router.post("/obtener_estado", async(req, res) => {
                     row['cuadernos'] = cuaderno;
 
                     delete row['Detalle'];
+
                     break;
                 } catch (error) {
                     await page.screenshot({ path: './error.png', fullPage: true });
