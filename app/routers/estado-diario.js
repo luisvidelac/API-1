@@ -33,12 +33,16 @@ router.get("/*", (req, res) => {
  *              password:
  *                  type: string
  *                  description: Clave PJUD
+ *              receptor:
+ *                  type: boolean
+ *                  description: Obtener notificacion receptores
  *          required:
  *              - usuario
  *              - password
  *          example:
  *              usuario: "12345678"
  *              password: password
+ *              receptor: true
  *      Error:
  *          type: object
  *          properties:
@@ -152,6 +156,8 @@ router.post("/obtener_estado", async(req, res) => {
         return;
     }
     const usuario = peticion.usuario;
+
+    const receptor = peticion.receptor ? true : false;
 
     peticion.fecha = peticion.fecha ? new Date(parseInt(peticion.fecha.split(config.separatorDate)[2]), parseInt(peticion.fecha.split(config.separatorDate)[1]) - 1, parseInt(peticion.fecha.split(config.separatorDate)[0])) : new Date();
     let a = [{ day: 'numeric' }, { month: 'numeric' }, { year: 'numeric' }];
@@ -788,40 +794,44 @@ router.post("/obtener_estado", async(req, res) => {
                             } catch (error) {
 
                             }
-                            await timeout(500);
+                            await timeout(1000);
                         }
 
                     }
 
-                    await timeout(500);
+                    if (receptor) {
+                        await timeout(1000);
 
-                    await page.waitForSelector(`#modalDetalleEstDiaCivil > div > div > div.modal-body > div > div:nth-child(2) > table > tbody > tr > td:nth-child(2) > a > i`, {
-                        visible: true
-                    });
+                        await page.waitForSelector(`#modalDetalleEstDiaCivil > div > div > div.modal-body > div > div:nth-child(2) > table > tbody > tr > td:nth-child(2) > a > i`, {
+                            visible: true
+                        });
 
-                    await page.click(`#modalDetalleEstDiaCivil > div > div > div.modal-body > div > div:nth-child(2) > table > tbody > tr > td:nth-child(2) > a > i`);
+                        await page.click(`#modalDetalleEstDiaCivil > div > div > div.modal-body > div > div:nth-child(2) > table > tbody > tr > td:nth-child(2) > a > i`);
 
-                    await timeout(500);
+                        await timeout(1000);
+                        const modalReceptor = '#modalReceptorCivil';
 
-                    const modalReceptor = '#modalReceptorCivil';
+                        let receptores = await getReceptores(modalReceptor);
 
-                    let receptores = await getReceptores(modalReceptor);
+                        await timeout(1000);
 
-                    await timeout(500);
+                        await page.waitForSelector(`${modalReceptor} > div > div > div.modal-footer > button`, {
+                            visible: true
+                        });
 
-                    await page.waitForSelector(`${modalReceptor} > div > div > div.modal-footer > button`, {
-                        visible: true
-                    });
+                        await page.click(`${modalReceptor} > div > div > div.modal-footer > button`);
 
-                    await page.click(`${modalReceptor} > div > div > div.modal-footer > button`);
+                        row['receptores'] = receptores;
 
-                    row['receptores'] = receptores;
+                        await timeout(1000);
+                    }
 
-                    await timeout(500);
 
                     let cuaderno = await getModalCombo(modalSelector, row, usuario);
 
-                    await timeout(500);
+                    if (receptor) {
+                        await timeout(1000);
+                    }
 
                     await page.waitForSelector(`${modalSelector} > div > div > div.modal-footer > button`, {
                         visible: true
