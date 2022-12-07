@@ -272,7 +272,7 @@ router.post("/obtener_estado", async(req, res) => {
                     await page.evaluate(async(num) => {
                         pagina(num + 1, 3);
                     }, num);
-
+                    await timeout(1000);
                     result = await loop(page, causaTitle, num, usuario, paginas);
                 } catch (error) {
                     console.log("error obtenerCausas:", error);
@@ -592,13 +592,16 @@ router.post("/obtener_estado", async(req, res) => {
                             if (parseInt(pagina) === (num + 1)) {
                                 retorno = await getCausas(page, causaTitle, num, usuario);
                                 break;
+                            } else {
+                                continue;
                             }
                         } else {
                             if (causasPagina < 15) {
                                 retorno = await getCausas(page, causaTitle, num, usuario);
                                 break;
+                            } else {
+                                continue;
                             }
-                            continue;
                         }
 
                     }
@@ -634,8 +637,9 @@ router.post("/obtener_estado", async(req, res) => {
                         reintento++;
                         if (reintento > 3) {
                             throw error;
+                        } else {
+                            continue;
                         }
-                        continue;
                     }
                 };
             }
@@ -784,7 +788,7 @@ router.post("/obtener_estado", async(req, res) => {
                             } catch (error) {
 
                             }
-                            await timeout(1000);
+                            await timeout(500);
                         }
 
                     }
@@ -817,7 +821,7 @@ router.post("/obtener_estado", async(req, res) => {
 
                     let cuaderno = await getModalCombo(modalSelector, row, usuario);
 
-                    await timeout(1000);
+                    await timeout(500);
 
                     await page.waitForSelector(`${modalSelector} > div > div > div.modal-footer > button`, {
                         visible: true
