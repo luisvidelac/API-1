@@ -36,6 +36,9 @@ router.get("/*", (req, res) => {
  *              receptor:
  *                  type: boolean
  *                  description: Obtener notificacion receptores
+ *              fecha:
+ *                  type: string
+ *                  description: Fecha consulta dd/mm/yyy (opcional) por defecto toma la fecha actual y resta 1 dia para la consulta
  *          required:
  *              - usuario
  *              - password
@@ -43,6 +46,7 @@ router.get("/*", (req, res) => {
  *              usuario: "12345678"
  *              password: password
  *              receptor: true
+ *              fecha: "31/12/2022"
  *      Error:
  *          type: object
  *          properties:
