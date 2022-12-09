@@ -207,7 +207,7 @@ router.post("/obtener_estado", async(req, res) => {
             await page.setDefaultTimeout(config.maxTimeout);
             await page.setDefaultNavigationTimeout(config.maxTimeout);
 
-            causas = await getCausasBD(causas);
+            causas = await getCausasBD(causas, receptor);
 
             causas = await getCausasModal(page, causas, paginas, peticion.usuario);
 
@@ -269,6 +269,7 @@ router.post("/obtener_estado", async(req, res) => {
             console.log("pagina:", 1, "de:", paginas);
             for await (let num of asyncGenerator(paginas)) {
                 try {
+                    console.log('obtenerCausas getCausas 1');
                     result = await getCausas(page, causaTitle, num, usuario);
                     if (insert) {
                         await insertUpdateCausas(result);
@@ -396,9 +397,16 @@ router.post("/obtener_estado", async(req, res) => {
             const offset = yourDate.getTimezoneOffset()
             yourDate = new Date(yourDate.getTime() - (offset * 60 * 1000))
             let fechaAct = yourDate.toISOString().split('T')[0];
-            let consulta = {
-                "$where": "this.updated_at.toJSON().slice(0, 10) != '" + fechaAct + "'"
-            };
+            let consulta = {};
+            if (!receptor) {
+                consulta = {
+                    "$where": "this.updated_at.toJSON().slice(0, 10) != '" + fechaAct + "'"
+                };
+            } else {
+                consulta = {
+                    "$where": "this.updated_at.toJSON().slice(0, 10) === '" + fechaAct + "'"
+                };
+            }
 
             const causas = await causaModel.find(consulta);
 
@@ -596,6 +604,7 @@ router.post("/obtener_estado", async(req, res) => {
                         if (element) {
                             pagina = await page.evaluate(el => el.textContent, element)
                             if (parseInt(pagina) === (num + 1)) {
+                                console.log('loop obtener causas 1');
                                 retorno = await getCausas(page, causaTitle, num, usuario);
                                 break;
                             } else {
@@ -603,6 +612,7 @@ router.post("/obtener_estado", async(req, res) => {
                             }
                         } else {
                             if (causasPagina < 15) {
+                                console.log('loop obtener causas 2');
                                 retorno = await getCausas(page, causaTitle, num, usuario);
                                 break;
                             } else {
@@ -699,11 +709,13 @@ router.post("/obtener_estado", async(req, res) => {
                     await page.screenshot({ path: './error.png', fullPage: true });
                     reintento++;
                     if (reintento > 3) {
+                        console.log('ya probo 3 veces que no cargo 1');
                         throw error;
                     }
                     try {
                         if (!await validateLogin(page)) {
                             try {
+                                console.log('volvio a cargar pagina de inicio');
                                 await page.waitForSelector('#verDetalleEstDiaCivil > tr');
                                 //const causasPagina = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
                                 const causasPagina = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
@@ -717,10 +729,14 @@ router.post("/obtener_estado", async(req, res) => {
                                 await page.screenshot({ path: './error.png', fullPage: true });
                                 reintento++;
                                 if (reintento > 3) {
+                                    console.log('ya probo 3 veces que no cargo 2');
                                     throw error;
                                 }
                             }
-                        };
+                        } else {
+                            console.log('volvio a la pagina a esperar que cargue');
+                            continue;
+                        }
                     } catch (error) {
                         console.log("error en getCausas 3:", error);
                         await page.screenshot({ path: './error.png', fullPage: true });
