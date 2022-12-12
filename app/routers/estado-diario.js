@@ -234,13 +234,17 @@ router.post("/obtener_estado", async(req, res) => {
 
     } catch (error) {
         console.log("error en principal:", error);
-        await page.screenshot({ path: './error.png', fullPage: true })
-        if (page.url() != config.targeturi) {
-            await page.evaluate(function() {
-                salir();
-            });
+        if (page) {
+            await page.screenshot({ path: './error.png', fullPage: true })
+            if (page.url() != config.targeturi) {
+                await page.evaluate(function() {
+                    salir();
+                });
+            }
         }
-        await browser.close();
+        if (browser) {
+            await browser.close();
+        }
         res.json({
             status: 500,
             msg: `Error`,
@@ -321,6 +325,7 @@ router.post("/obtener_estado", async(req, res) => {
                 if (reintento > 3) {
                     break;
                 } else {
+                    await timeout(1000);
                     continue;
                 }
 
