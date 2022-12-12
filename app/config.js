@@ -1,8 +1,7 @@
 const config = {
     delay: 1000,
     defTimeout: 0,
-    timeout: 30000,
-    maxTimeout: 60000,
+    timeout: 60000,
     url: "https://oficinajudicialvirtual.pjud.cl/",
     targeturi: "https://oficinajudicialvirtual.pjud.cl/home/index.php",
     homeUrl: "https://oficinajudicialvirtual.pjud.cl/indexN.php",

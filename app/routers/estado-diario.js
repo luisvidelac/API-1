@@ -38,7 +38,7 @@ router.get("/*", (req, res) => {
  *                  description: Obtener notificacion receptores
  *              fecha:
  *                  type: string
- *                  description: Fecha consulta dd/mm/yyy (opcional) por defecto toma la fecha actual y resta 1 dia para la consulta
+ *                  description: Fecha consulta dd/mm/yyy (opcional) fecha de consulta estado. Por defecto toma la fecha actual y resta 1 dia para la consulta. Si es Lunes consulta Viernes y Sabado
  *          required:
  *              - usuario
  *              - password
@@ -162,16 +162,24 @@ router.post("/obtener_estado", async(req, res) => {
     const usuario = peticion.usuario;
 
     const receptor = peticion.receptor ? true : false;
-
-    peticion.fecha = peticion.fecha ? new Date(parseInt(peticion.fecha.split(config.separatorDate)[2]), parseInt(peticion.fecha.split(config.separatorDate)[1]) - 1, parseInt(peticion.fecha.split(config.separatorDate)[0])) : new Date();
-    let a = [{ day: 'numeric' }, { month: 'numeric' }, { year: 'numeric' }];
-    let resta = -1;
-    if (peticion.fecha.getDay() === 1) {
-        resta = -3;
-    } else if (peticion.fecha.getDay() === 0) {
-        resta = -2;
+    let fechas = [];
+    if (peticion.fecha) {
+        fechas.push(formatDate(sumarDias(new Date(parseInt(peticion.fecha.split(config.separatorDate)[2]), parseInt(peticion.fecha.split(config.separatorDate)[1]) - 1, parseInt(peticion.fecha.split(config.separatorDate)[0])), 0), config.separatorDate));
+    } else {
+        let a = [{ day: 'numeric' }, { month: 'numeric' }, { year: 'numeric' }];
+        if (new Date().getDay() === 1) {
+            fechas.push(formatDate(sumarDias(new Date(), -3), config.separatorDate));
+            fechas.push(formatDate(sumarDias(new Date(), -2), config.separatorDate));
+        } else if (new Date().getDay() === 0) {
+            peticion.fecha = formatDate(sumarDias(new Date(), -2), config.separatorDate);
+            fechas.push(peticion.fecha);
+            peticion.fecha = formatDate(sumarDias(new Date(), -1), config.separatorDate);
+            fechas.push(peticion.fecha);
+        } else {
+            peticion.fecha = formatDate(sumarDias(new Date(), -1), config.separatorDate);
+            fechas.push(peticion.fecha);
+        }
     }
-    peticion.fecha = formatDate(sumarDias(peticion.fecha, resta), config.separatorDate);
 
     const start = process.hrtime();
 
@@ -194,28 +202,33 @@ router.post("/obtener_estado", async(req, res) => {
     });
 
     try {
-
-        await cargaPaginaPrincipal(page);
-
-        const rows = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
-
         let causas = [];
-        let paginas = 0;
-        if (rows > 1) {
 
-            let obj = await obtenerCausas(page, usuario, true);
-            causas = obj.causas;
-            paginas = obj.paginas;
-            causaTitle = obj.causaTitle;
+        for await (const fecha of fechas) {
 
-            await page.setDefaultTimeout(config.maxTimeout);
-            await page.setDefaultNavigationTimeout(config.maxTimeout);
+            peticion.fecha = fecha;
+            await cargaPaginaPrincipal(page);
 
-            causas = await getCausasBD(causas, receptor);
+            const rows = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
 
-            causas = await getCausasModal(page, causas, paginas, peticion.usuario);
+            let paginas = 0;
+            if (rows > 1) {
 
-            await deepReplace(causas, 'url');
+                let obj = await obtenerCausas(page, usuario, true);
+                causas = obj.causas;
+                paginas = obj.paginas;
+                causaTitle = obj.causaTitle;
+
+                //await page.setDefaultTimeout(config.maxTimeout);
+                //await page.setDefaultNavigationTimeout(config.maxTimeout);
+
+                causas = await getCausasBD(causas, receptor);
+
+                causas = await getCausasModal(page, causas, paginas, peticion.usuario);
+
+                await deepReplace(causas, 'url');
+
+            }
 
         }
 
