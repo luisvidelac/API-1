@@ -35,11 +35,23 @@ app.listen(process.env.PORT, () => {
 npm start 
 ```
 
+## Servicio MongoDB
+```bash
+sudo systemctl status mongod // revisa estado de la base de datos
+sudo systemctl start mongod // sube de la base de datos
+sudo systemctl stop mongod // sube de la base de datos
+
+sudo systemctl enable mongod // configura el servicio arriba al reiniciar la maquina
+sudo systemctl disable mongod // configura el servicio abajo al reiniciar la maquina
+```
+
+
 ## Ejecución con PM2
 ```bash
 npm i -g pm2
 pm2 start index.js --name pjud
 pm2 startup
+sudo env PATH=$PATH:/home/gespron/.nvm/versions/node/v18.12.1/bin /home/gespron/.nvm/versions/node/v18.12.1/lib/node_modules/pm2/bin/pm2 startup systemd -u gespron --hp /home/gespron
 pm2 save
 ```
 
