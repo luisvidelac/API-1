@@ -215,8 +215,6 @@ router.post("/obtener_estado", async(req, res) => {
 
             causas = await getCausasModal(page, causas, paginas, peticion.usuario);
 
-            //await insertUpdateCausas(causas);
-
             await deepReplace(causas, 'url');
 
         }
@@ -650,6 +648,7 @@ router.post("/obtener_estado", async(req, res) => {
                         await page.evaluate(async(num) => {
                             pagina(num + 1, 3);
                         }, num);
+                        await timeout(1000);
                         continue;
                     } catch (error) {
                         console.log("error en loop 4:", error);
@@ -725,8 +724,9 @@ router.post("/obtener_estado", async(req, res) => {
                                 const causasPagina = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
                                 await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > ul');
                                 await page.evaluate(async(num) => {
-                                    pagina(num, 3);
+                                    pagina(num + 1, 3);
                                 }, num);
+                                await timeout(1000);
                                 continue;
                             } catch (error) {
                                 console.log("error en getCausas 2:", error);
