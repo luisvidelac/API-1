@@ -299,6 +299,7 @@ router.post("/obtener_estado", async(req, res) => {
                         pagina(num + 1, 3);
                     }, num);
                     await timeout(1000);
+                    console.log('cargando proxima pagina 2');
                     result = await loop(page, causaTitle, num, usuario, paginas);
                 } catch (error) {
                     console.log("error obtenerCausas:", error);
@@ -628,14 +629,16 @@ router.post("/obtener_estado", async(req, res) => {
                                 retorno = await getCausas(page, causaTitle, num, usuario);
                                 break;
                             } else {
+                                console.log('continue loop obtener causas 3');
                                 continue;
                             }
                         } else {
                             if (causasPagina < 15) {
-                                console.log('loop obtener causas 2');
+                                console.log('loop obtener causas 4');
                                 retorno = await getCausas(page, causaTitle, num, usuario);
                                 break;
                             } else {
+                                console.log('continue loop obtener causas 5');
                                 continue;
                             }
                         }
@@ -667,6 +670,7 @@ router.post("/obtener_estado", async(req, res) => {
                             pagina(num + 1, 3);
                         }, num);
                         await timeout(1000);
+                        console.log('cargando proxima pagina 3');
                         continue;
                     } catch (error) {
                         console.log("error en loop 4:", error);
@@ -745,6 +749,7 @@ router.post("/obtener_estado", async(req, res) => {
                                     pagina(num + 1, 3);
                                 }, num);
                                 await timeout(1000);
+                                console.log('cargando proxima pagina 1');
                                 continue;
                             } catch (error) {
                                 console.log("error en getCausas 2:", error);
