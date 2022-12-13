@@ -45,7 +45,7 @@ sudo systemctl enable mongod // configura el servicio arriba al reiniciar la maq
 sudo systemctl disable mongod // configura el servicio abajo al reiniciar la maquina
 ```
 
-## create index
+## Create Index MongoDB
 
 ```bash
 db.getCollection('causas').createIndex(
