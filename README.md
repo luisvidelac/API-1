@@ -45,6 +45,50 @@ sudo systemctl enable mongod // configura el servicio arriba al reiniciar la maq
 sudo systemctl disable mongod // configura el servicio abajo al reiniciar la maquina
 ```
 
+## create index
+
+```bash
+db.getCollection('causas').createIndex(
+  {
+    "Rol" : 1,
+    "Caratulado" : 1,
+    "Tribunal" : 1
+},
+   {
+     name: "find_causas"
+   }
+);
+
+db.getCollection('causas').createIndex(
+  {
+    "updated_at" : 1
+},
+   {
+     name: "updated_at_causas"
+   }
+);
+
+db.getCollection('doctos').createIndex(
+  {
+    "Rol" : 1,
+    "Caratulado" : 1,
+    "Tribunal" : 1,
+    "usuario" : 1
+},
+   {
+     name: "find_doctos"
+   }
+);
+
+db.getCollection('doctos').createIndex(
+  {
+    "uuid" : 1
+},
+   {
+     name: "uuid_doctos"
+   }
+);
+```
 
 ## Ejecución con PM2
 ```bash
