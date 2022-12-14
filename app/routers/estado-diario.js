@@ -9,9 +9,6 @@ const doctoModel = require('../models/doctomodel');
 const hidden = require('puppeteer-extra-plugin-stealth');
 
 const { executablePath } = require('puppeteer');
-const { resolve } = require("path");
-const { time } = require("console");
-const { title, exit } = require("process");
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -246,9 +243,9 @@ router.post("/obtener_estado", async(req, res) => {
         })
 
     } catch (error) {
-        console.log("error en principal:", error);
+        console.log("error en principal:", error.message ? error.message : error);
         if (page) {
-            await page.screenshot({ path: './error.png', fullPage: true })
+            await page.screenshot({ path: './error.png' })
             if (page.url() != config.targeturi) {
                 await page.evaluate(function() {
                     salir();
@@ -325,6 +322,7 @@ router.post("/obtener_estado", async(req, res) => {
 
     async function cargaPaginaPrincipal(page) {
         let reintento = 0;
+        let mensaje = "";
         while (true) {
             try {
                 await page.goto(config.targeturi, {
@@ -335,6 +333,11 @@ router.post("/obtener_estado", async(req, res) => {
                 await page.waitForSelector('#verDetalleEstDiaCivil > tr');
                 break;
             } catch (error) {
+                console.log("error de clave:::", error);
+                if (error === 'Usuario o clave incorrectas.') {
+                    mensaje = error;
+                    break;
+                }
                 reintento++;
                 if (reintento > 3) {
                     break;
@@ -344,6 +347,9 @@ router.post("/obtener_estado", async(req, res) => {
                 }
 
             }
+        }
+        if (mensaje === 'Usuario o clave incorrectas.') {
+            throw Error(mensaje);
         }
         if (reintento > 3) {
             throw Error("no se pudo conectar")
@@ -442,7 +448,11 @@ router.post("/obtener_estado", async(req, res) => {
 
     async function validateLogin(page) {
         if (page.url() === config.targeturi) {
-            await loginEstadoDiario(page);
+            try {
+                await loginEstadoDiario(page);
+            } catch (error) {
+                throw error;
+            }
             await loadEstadoDiario(page);
             await consultaEstadoDiario(page);
             return false;
@@ -451,25 +461,34 @@ router.post("/obtener_estado", async(req, res) => {
     }
 
     async function loginEstadoDiario(page) {
-        await page.waitForSelector('#page-wrapper > section.banner > div > div.container.hidden-xs > div > div:nth-child(1) > div > button:nth-child(1)');
-        await page.click('#page-wrapper > section.banner > div > div.container.hidden-xs > div > div:nth-child(1) > div > button:nth-child(1)');
+        return new Promise(async(resolve, reject) => {
+            await page.waitForSelector('#page-wrapper > section.banner > div > div.container.hidden-xs > div > div:nth-child(1) > div > button:nth-child(1)');
+            await page.click('#page-wrapper > section.banner > div > div.container.hidden-xs > div > div:nth-child(1) > div > button:nth-child(1)');
 
-        await page.waitForSelector('#btnSegClave')
-        await page.click('#btnSegClave')
-        await timeout(2000);
+            await page.waitForSelector('#btnSegClave')
+            await page.click('#btnSegClave')
+            await timeout(2000);
 
-        await page.waitForSelector('#rut');
-        await page.focus('#rut');
-        await page.keyboard.type(peticion.usuario);
+            await page.waitForSelector('#rut');
+            await page.focus('#rut');
+            await page.keyboard.type(peticion.usuario);
 
-        await page.waitForSelector('#password')
-        await page.focus('#password');
-        await page.keyboard.type(peticion.password);
+            await page.waitForSelector('#password')
+            await page.focus('#password');
+            await page.keyboard.type(peticion.password);
 
-        await page.waitForSelector('#btnSegundaClaveIngresar')
-        await page.click('#btnSegundaClaveIngresar')
+            await page.waitForSelector('#btnSegundaClaveIngresar')
+            await page.click('#btnSegundaClaveIngresar')
+            page.on('dialog', async dialog => {
+                console.log(dialog.message()); 
+                await dialog.accept();
+                reject(dialog.message());
+            })
+            await timeout(1000);
+            resolve("ok");
 
-    }
+        });
+    };
 
     async function loadEstadoDiario(page) {
         let reintento = 0;
