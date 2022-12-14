@@ -423,10 +423,6 @@ router.post("/obtener_estado", async(req, res) => {
                 consulta = {
                     "$where": "this.updated_at.toJSON().slice(0, 10) != '" + fechaAct + "'"
                 };
-            } else {
-                consulta = {
-                    "$where": "this.updated_at.toJSON().slice(0, 10) === '" + fechaAct + "'"
-                };
             }
 
             const causas = await causaModel.find(consulta);
