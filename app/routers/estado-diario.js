@@ -255,7 +255,7 @@ router.post("/obtener_estado", async(req, res) => {
         if (browser) {
             await browser.close();
         }
-        res.json({
+        res.status(500).json({
             status: 500,
             msg: `Error`,
             data: error.message ? error.message : error
