@@ -75,14 +75,30 @@ router.get("/*", (req, res) => {
  *              Caratulado:
  *                  type: string
  *                  description: caratulado de la causa
- *              usuario:
- *                  type: string
- *                  description: usuario que fue encontrada la causa
  *              documentos:
  *                  type: array
  *                  description: documentos de la causa
  *                  items:
  *                      type: object
+ *              cuadernos:
+ *                  type: array
+ *                  description: cuadernos de la causa
+ *                  items:
+ *                      type: object
+ *              receptores:
+ *                  type: array
+ *                  description: receptores de la causa
+ *                  items:
+ *                      type: object
+ *              usuarios:
+ *                  type: array
+ *                  description: usuarios que fue encontrada la causa
+ *              FechaEstDia:
+ *                  type: string
+ *                  description: fecha consulta estado diario en PJUD dd/mm/yyyy
+ *              updated_at:
+ *                  type: string
+ *                  description: fecha ultima actualizacion yyyy-mm-dd
  *          example:
  *              uuid: "aaaa-bbbb-cccc-dddd"
  *      Response:
