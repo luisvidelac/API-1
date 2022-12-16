@@ -49,16 +49,67 @@ const doctoModel = require("../models/doctomodel");
  *              Caratulado:
  *                  type: string
  *                  description: caratulado de la causa
- *              usuario:
- *                  type: string
- *                  description: usuario que fue encontrada la causa
  *              documentos:
  *                  type: array
  *                  description: documentos de la causa
  *                  items:
  *                      type: object
+ *              cuadernos:
+ *                  type: array
+ *                  description: cuadernos de la causa
+ *                  items:
+ *                      type: object
+ *              receptores:
+ *                  type: array
+ *                  description: receptores de la causa
+ *                  items:
+ *                      type: object
+ *              usuarios:
+ *                  type: array
+ *                  description: usuarios que fue encontrada la causa
+ *              FechaEstDia:
+ *                  type: string
+ *                  description: fecha consulta estado diario en PJUD dd/mm/yyyy
+ *              updated_at:
+ *                  type: string
+ *                  description: fecha ultima actualizacion yyyy-mm-dd
  *          example:
  *              uuid: "aaaa-bbbb-cccc-dddd"
+ *      Elimina:
+ *          type: object
+ *          properties:
+ *              fecha:
+ *                  type: string
+ *                  description: fecha desde la eliminacion de causas y documentos yyyy-mm-dd
+ *          required:
+ *              - fecha
+ *          example:
+ *              fecha: "2022-12-31"
+ *      ResponseElimina:
+ *          type: object
+ *          properties:
+ *              status:
+ *                  type: number
+ *                  description: status
+ *              msg:
+ *                  type: string
+ *                  description: mensaje
+ *              data:
+ *                  type: object
+ *                  description: data respuesta
+ *                  properties:
+ *                      acknowledged:
+ *                          type: boolean
+ *                          description: status
+ *                      deletedCount:
+ *                          type: number
+ *                          description: causas eliminadas
+ *          example:
+ *              status: 200
+ *              msg: "ok"
+ *              data:
+ *                  acknowledged: true
+ *                  deletedCount: 643
  *      Error:
  *          type: object
  *          properties:
@@ -83,6 +134,7 @@ const doctoModel = require("../models/doctomodel");
  * /api/version:
  *  get:
  *      summary: obtiene la version de la api
+ *      tags: [Version]
  *      responses:
  *          200:
  *              description: Obtiene la version de la api
@@ -101,7 +153,7 @@ router.get("/*", (req, res) => {
  * /api/consulta_diario/obtener_documento:
  *  post:
  *      summary: permite obtener un documento
- *      tags: [Document]
+ *      tags: [Document,Error]
  *      requestBody:
  *          required: true
  *          content:
@@ -176,7 +228,7 @@ router.post("/obtener_documento", async(req, res) => {
  * /api/consulta_diario/obtener_causa:
  *  post:
  *      summary: permite obtener la(s) causa(s)
- *      tags: [Causa]
+ *      tags: [Causa,Error]
  *      requestBody:
  *          required: true
  *          content:
@@ -216,7 +268,7 @@ router.post("/obtener_causa", async(req, res) => {
                     "Tribunal": causa.Tribunal,
                     "cuadernos": causa.cuadernos,
                     "receptores": causa.receptores,
-                    "usuario": causa.usuario,
+                    "usuarios": causa.usuarios,
                     "uuid": causa.uuid,
                     "FechaEstDia": causa.FechaEstDia,
                     "updated_at": causa.updated_at
@@ -235,6 +287,67 @@ router.post("/obtener_causa", async(req, res) => {
                 data: 'No encontrado'
             })
         }
+    } catch (error) {
+        console.log(error);
+        res.json({
+            status: 500,
+            msg: `OK`,
+            data: error.message
+        })
+
+    } finally {
+        return;
+    }
+});
+
+/**
+ * @swagger
+ * /api/consulta_diario/eliminar_causa:
+ *  post:
+ *      summary: permite eliminar causas y documentos desde la fecha indicada y anteriores
+ *      tags: [Elimina,ResponseElimina,Error]
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      $ref: '#components/schemas/Elimina'
+ *      responses:
+ *          200:
+ *              description: Respuesta de Eliminacion
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          $ref: '#components/schemas/ResponseElimina'
+ *          500:
+ *              description: Error
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          $ref: '#components/schemas/Error'
+ */
+router.post("/eliminar_causa", async(req, res) => {
+    const peticion = req.body;
+    if (!peticion.fecha || peticion.fecha.length == 0) {
+        res.json({
+            status: 500,
+            msg: "Error",
+            data: "fecha es obligatorio"
+        })
+        return;
+
+    }
+    try {
+        let retorno = await doctoModel.deleteMany({ "$where": "this.updated_at.toJSON().slice(0, 10) <= '" + peticion.fecha + "'" });
+        retorno = await causaModel.deleteMany({ "$where": "this.updated_at.toJSON().slice(0, 10) <= '" + peticion.fecha + "'" });
+        res.json({
+            status: 200,
+            msg: `OK`,
+            data: retorno
+        });
     } catch (error) {
         console.log(error);
         res.json({
