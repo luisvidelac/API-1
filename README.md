@@ -46,7 +46,8 @@ pm2 save
 
 ## Reinicio servicio PM2
 ```bash
-pm2 ls -- obtiene id
+# obtiene id de proceso
+pm2 ls 
 pm2 restart <id>
 ```
 
