@@ -8,7 +8,8 @@ const schema = mongoose.Schema({
     Rol: String,
     Caratulado: String,
     Tribunal: String,
-    usuario: String,
+    FechaEstDia: String,
+    usuarios: [],
     created_at: { type: Date },
     updated_at: { type: Date, required: true, default: Date.now }
 }, {

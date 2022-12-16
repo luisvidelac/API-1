@@ -156,7 +156,6 @@ router.post("/obtener_estado", async(req, res) => {
         })
         return;
     }
-    const usuario = peticion.usuario;
 
     const receptor = peticion.receptor ? true : false;
     let fechas = [];
@@ -211,7 +210,7 @@ router.post("/obtener_estado", async(req, res) => {
             let paginas = 0;
             if (rows > 1) {
 
-                let obj = await obtenerCausas(page, usuario, true);
+                let obj = await obtenerCausas(page, peticion.usuario, true, fecha);
                 causas = obj.causas;
                 paginas = obj.paginas;
                 causaTitle = obj.causaTitle;
@@ -219,9 +218,18 @@ router.post("/obtener_estado", async(req, res) => {
                 //await page.setDefaultTimeout(config.maxTimeout);
                 //await page.setDefaultNavigationTimeout(config.maxTimeout);
 
-                causas = await getCausasBD(causas, receptor);
+                let causasfilter = await getCausasBD(causas, receptor);
+                const causasdiff = [];
+                for await (const causa of causas) {
+                    let bus = causasfilter.filter(c => c.Rol === causa.Rol && c.Fecha === causa.Fecha && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
+                    if (!bus) {
+                        causasdiff.push(causa);
+                    }
+                }
 
-                causas = await getCausasModal(page, causas, paginas, peticion.usuario);
+                causas = await getCausasModal(page, causasfilter, paginas, peticion.usuario, fecha);
+
+                causas = causas.concat(causasdiff);
 
                 await deepReplace(causas, 'url');
 
@@ -263,7 +271,7 @@ router.post("/obtener_estado", async(req, res) => {
     }
 
 
-    async function obtenerCausas(page, usuario, insert) {
+    async function obtenerCausas(page, usuario, insert, fecha) {
         let causas = [];
         let causaTitle = await titulosCausas(page);
         let { cantCausas, paginas } = await cantidadPaginas(page);
@@ -275,20 +283,20 @@ router.post("/obtener_estado", async(req, res) => {
         if (paginas === 1) {
             console.log("pagina:", paginas, "de:", paginas);
 
-            result = await getCausas(page, causaTitle, paginas, usuario);
+            result = await getCausas(page, causaTitle, paginas, fecha);
 
             causas = causas.concat(result);
             if (insert) {
-                await insertUpdateCausas(causas);
+                await insertUpdateCausas(causas, usuario);
             }
         } else {
             console.log("pagina:", 1, "de:", paginas);
             for await (let num of asyncGenerator(paginas)) {
                 try {
                     console.log('obtenerCausas getCausas 1');
-                    result = await getCausas(page, causaTitle, num, usuario);
+                    result = await getCausas(page, causaTitle, num, fecha);
                     if (insert) {
-                        await insertUpdateCausas(result);
+                        await insertUpdateCausas(result, usuario);
                     }
                     causas = causas.concat(result);
                     await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + (result.length + 1) + ') > td > nav > ul');
@@ -297,7 +305,7 @@ router.post("/obtener_estado", async(req, res) => {
                     }, num);
                     await timeout(1000);
                     console.log('cargando proxima pagina 2');
-                    result = await loop(page, causaTitle, num, usuario, paginas);
+                    result = await loop(page, causaTitle, num, fecha);
                 } catch (error) {
                     console.log("error obtenerCausas:", error);
                     await page.screenshot({ path: './error.png', fullPage: true });
@@ -307,7 +315,7 @@ router.post("/obtener_estado", async(req, res) => {
 
             }
             if (insert) {
-                await insertUpdateCausas(result);
+                await insertUpdateCausas(result, usuario);
             }
             causas = causas.concat(result);
         }
@@ -356,9 +364,27 @@ router.post("/obtener_estado", async(req, res) => {
         }
     }
 
-    async function insertUpdateCausas(causas) {
+    async function insertUpdateCausas(causas, usuario) {
         try {
-            const causaUpdate = causas.map(causa => ({
+            let ret = []
+            for await (const causa of causas) {
+
+                let bus = await causaModel.findOne({ Rol: causa.Rol, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
+                if (bus) {
+                    causa.usuarios = Array.from(bus['usuarios']);
+                }
+                if (!causa.usuarios || causa.usuarios.length === 0) {
+                    causa.usuarios = [];
+                    causa.usuarios.push(usuario);
+                    ret.push(causa);
+                } else {
+                    if (!causa.usuarios.find(u => u === usuario)) {
+                        causa.usuarios.push(usuario);
+                    }
+                    ret.push(causa);
+                }
+            }
+            const causaUpdate = ret.map(causa => ({
                 updateOne: {
                     filter: {
                         Rol: causa.Rol,
@@ -387,8 +413,7 @@ router.post("/obtener_estado", async(req, res) => {
                 filter: {
                     Rol: docto.Rol,
                     Caratulado: docto.Caratulado,
-                    Tribunal: docto.Tribunal,
-                    usuario: docto.usuario
+                    Tribunal: docto.Tribunal
                 }
             }
         }));
@@ -396,8 +421,26 @@ router.post("/obtener_estado", async(req, res) => {
         return await doctoModel.bulkWrite(doctoDelete);
     }
 
-    async function insertUpdateDoctos(doctos) {
-        const doctoUpdate = doctos.map(docto => ({
+    async function insertUpdateDoctos(doctos, usuario) {
+        let ret = []
+        for await (const docto of doctos) {
+            let bus = await doctoModel.findOne({ Rol: docto.Rol, Caratulado: docto.Caratulado, Tribunal: docto.Tribunal });
+            if (bus) {
+                docto.usuarios = Array.from(bus['usuarios']);
+            }
+
+            if (!docto.usuarios || docto.usuarios.length === 0) {
+                docto.usuarios = [];
+                docto.usuarios.push(usuario);
+                ret.push(docto);
+            } else {
+                if (!docto.usuarios.find(u => u === usuario)) {
+                    docto.usuarios.push(usuario);
+                    ret.push(docto);
+                }
+            }
+        }
+        const doctoUpdate = ret.map(docto => ({
             updateOne: {
                 filter: {
                     uuid: docto.uuid,
@@ -571,8 +614,8 @@ router.post("/obtener_estado", async(req, res) => {
         }
     }
 
-    async function refreshDetalle(page, usuario, dataRows, result) {
-        let { causas } = await obtenerCausas(page, usuario, false);
+    async function refreshDetalle(page, usuario, dataRows, result, fecha) {
+        let { causas } = await obtenerCausas(page, usuario, false, fecha);
 
         const retorno = [];
         for await (let causa of result) {
@@ -587,7 +630,7 @@ router.post("/obtener_estado", async(req, res) => {
         return retorno;
     }
 
-    async function getCausasModal(page, result, paginas, usuario) {
+    async function getCausasModal(page, result, paginas, usuario, fecha) {
         let dataRows = []
         let i = 1;
         const total = result.length;
@@ -597,7 +640,7 @@ router.post("/obtener_estado", async(req, res) => {
                 await validateLogin(page);
                 console.log('procesando causa ', i, ' de ', total, ' detalle ', causa);
                 await deleteDoctos([causa]);
-                const modalContent = await openRowModal(causa, usuario);
+                const modalContent = await openRowModal(causa, usuario, fecha);
                 if (modalContent === "Causa No Disponible") {
                     throw Error("Causa No Disponible");
                 }
@@ -606,7 +649,7 @@ router.post("/obtener_estado", async(req, res) => {
                     break;
                 }
                 modalContent.updated_at = Date.now();
-                await insertUpdateCausas([modalContent]);
+                await insertUpdateCausas([modalContent], usuario);
                 dataRows.push(modalContent)
                 i++;
             }
@@ -616,7 +659,7 @@ router.post("/obtener_estado", async(req, res) => {
                 });
                 await loadEstadoDiario(page);
                 await consultaEstadoDiario(page);
-                result = await refreshDetalle(page, paginas, dataRows, result);
+                result = await refreshDetalle(page, paginas, dataRows, result, fecha);
                 continue;
             }
             break;
@@ -624,7 +667,7 @@ router.post("/obtener_estado", async(req, res) => {
         return dataRows;
     }
 
-    async function loop(page, causaTitle, num, usuario, totPaginas) {
+    async function loop(page, causaTitle, num, fecha) {
         let retorno = [];
         let reintento = 0;
         while (true) {
@@ -641,7 +684,7 @@ router.post("/obtener_estado", async(req, res) => {
                             pagina = await page.evaluate(el => el.textContent, element)
                             if (parseInt(pagina) === (num + 1)) {
                                 console.log('loop obtener causas 1');
-                                retorno = await getCausas(page, causaTitle, num, usuario);
+                                retorno = await getCausas(page, causaTitle, num, fecha);
                                 break;
                             } else {
                                 console.log('continue loop obtener causas 3');
@@ -650,7 +693,7 @@ router.post("/obtener_estado", async(req, res) => {
                         } else {
                             if (causasPagina < 15) {
                                 console.log('loop obtener causas 4');
-                                retorno = await getCausas(page, causaTitle, num, usuario);
+                                retorno = await getCausas(page, causaTitle, num, fecha);
                                 break;
                             } else {
                                 console.log('continue loop obtener causas 5');
@@ -714,7 +757,7 @@ router.post("/obtener_estado", async(req, res) => {
         }
     }
 
-    async function getCausas(page, causaTitle, num, usuario) {
+    async function getCausas(page, causaTitle, num, fecha) {
         try {
             let result = [];
             let reintento = 0;
@@ -799,11 +842,10 @@ router.post("/obtener_estado", async(req, res) => {
                     causa[title] = row[i];
                 }
                 causa.uuid = uuidv4();
-                causa.usuario = usuario;
+                causa.FechaEstDia = fecha;
                 causas.push(causa);
             }
             return causas;
-            //return result;
         } catch (error) {
             console.log("error en getCausas 4:", error);
             await page.screenshot({ path: './error.png', fullPage: true })
@@ -812,7 +854,7 @@ router.post("/obtener_estado", async(req, res) => {
 
     }
 
-    async function openRowModal(row, usuario) {
+    async function openRowModal(row, usuario, fecha) {
         try {
             let expirado = false;
             let intentos = 0;
@@ -898,6 +940,8 @@ router.post("/obtener_estado", async(req, res) => {
                     await page.click(`${modalSelector} > div > div > div.modal-footer > button`);
 
                     row['cuadernos'] = cuaderno;
+
+                    row['FechaEstDia'] = fecha;
 
                     delete row['Detalle'];
 
@@ -1098,7 +1142,7 @@ router.post("/obtener_estado", async(req, res) => {
                                     let docto = { uuid: uuid, url: config.url + doc.url, contentype: base64encoding.split('|')[0], base64: base64encoding.split('|')[1], Rol: detcausa.Rol, Caratulado: detcausa.Caratulado, Tribunal: detcausa.Tribunal, usuario: usuario };
                                     docto.updated_at = Date.now();
                                     doctos.push(docto)
-                                    await insertUpdateDoctos(doctos);
+                                    await insertUpdateDoctos(doctos, usuario);
                                     pdfs.push({ uuid: uuid, url: config.url + doc.url })
                                 }
                                 causa[title] = pdfs;

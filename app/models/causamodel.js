@@ -11,7 +11,8 @@ const schema = mongoose.Schema({
     cuadernos: [],
     receptores: [],
     uuid: String,
-    usuario: String
+    FechaEstDia: String,
+    usuarios: []
 }, {
     versionKey: false
 })
