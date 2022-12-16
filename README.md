@@ -35,6 +35,21 @@ app.listen(process.env.PORT, () => {
 npm start 
 ```
 
+## Ejecución con PM2
+```bash
+npm i -g pm2
+pm2 start index.js --name pjud
+pm2 startup
+sudo env PATH=$PATH:/home/gespron/.nvm/versions/node/v18.12.1/bin /home/gespron/.nvm/versions/node/v18.12.1/lib/node_modules/pm2/bin/pm2 startup systemd -u gespron --hp /home/gespron
+pm2 save
+```
+
+## Reinicio servicio PM2
+```bash
+pm2 ls -- obtiene id
+pm2 restart <id>
+```
+
 ## Servicio MongoDB
 ```bash
 sudo systemctl status mongod // revisa estado de la base de datos
@@ -73,7 +88,7 @@ db.getCollection('doctos').createIndex(
     "Rol" : 1,
     "Caratulado" : 1,
     "Tribunal" : 1,
-    "usuario" : 1
+    "usuarios" : 1
 },
    {
      name: "find_doctos"
@@ -90,17 +105,6 @@ db.getCollection('doctos').createIndex(
 );
 ```
 
-## Ejecución con PM2
-```bash
-npm i -g pm2
-pm2 start index.js --name pjud
-pm2 startup
-sudo env PATH=$PATH:/home/gespron/.nvm/versions/node/v18.12.1/bin /home/gespron/.nvm/versions/node/v18.12.1/lib/node_modules/pm2/bin/pm2 startup systemd -u gespron --hp /home/gespron
-pm2 save
-```
-
-
-
 ## Resumen APIs
 
 ### Documentación Swagger 
@@ -113,6 +117,7 @@ http://localhost:3000/api-doc
 | /api/estado_diario/obtener_estado | POST | Obtiene las causas del día anterior | usuario: usuario PJUD, password: clave PJUD, receptor: true (opcional) fecha: dd/mm/yyyy fecha consulta estado diario ej: "31/12/2022" (opcional) |
 | /api/consulta_diario/obtener_causa | POST  | Obtener las causas ya procesadas  | usuario: id usuario, uuid: uuid del documento |'
 | /api/consulta_diario/obtener_documento | POST  | Obtener el documento de una causa | uuid: id de documento obtenido de los metodos anteriores |
+| /api/consulta_diario/eliminar_causa | POST  | Eliminar las causas y documentos desde la fecha y anteriores | fecha: desde la eliminación de causas y documentos desde fecha y anteriores yyyy-mm-dd |
 |/api/version | GET | Healthcheck | sin parametros |
 
 ## Ejemplos curls
@@ -130,5 +135,9 @@ curl --location --request POST 'http://localhost:3000/api/consulta_diario/obtene
 --data-raw '{
     "uuid": "44e5ce0a-ee73-456c-b481-d0fd384b1e44"
 }'
+
+curl --location --request POST 'http://localhost:3000/api/consulta_diario/eliminar_causa' \
+--header 'Content-Type: application/json' \
+--data-raw '{"fecha":"2022-12-31"}'
 
 curl --location --request GET 'http://localhost:3000/api/version'
