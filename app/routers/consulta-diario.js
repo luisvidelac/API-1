@@ -217,7 +217,9 @@ router.post("/obtener_causa", async(req, res) => {
                     "cuadernos": causa.cuadernos,
                     "receptores": causa.receptores,
                     "usuario": causa.usuario,
-                    "uuid": causa.uuid
+                    "uuid": causa.uuid,
+                    "FechaEstDia": causa.FechaEstDia,
+                    "updated_at": causa.updated_at
                 };
                 retorno.push(obj);
             }
