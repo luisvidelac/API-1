@@ -48,6 +48,7 @@ pm2 save
 ```bash
 # obtiene id de proceso
 pm2 ls 
+# reinicia proceso desde el id obtenido
 pm2 restart <id>
 ```
 
