@@ -521,6 +521,9 @@ router.post("/obtener_estado", async(req, res) => {
 
     async function loginEstadoDiario(page) {
         return new Promise(async(resolve, reject) => {
+            await timeout(1000);
+            await page.keyboard.press('Escape');
+            await timeout(1000);
             await page.waitForSelector('#page-wrapper > section.banner > div > div.container.hidden-xs > div > div:nth-child(1) > div > button:nth-child(1)');
             await page.click('#page-wrapper > section.banner > div > div.container.hidden-xs > div > div:nth-child(1) > div > button:nth-child(1)');
 
