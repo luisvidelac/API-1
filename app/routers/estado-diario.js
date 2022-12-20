@@ -194,6 +194,7 @@ router.post("/obtener_estado", async(req, res) => {
     }
 
     const start = process.hrtime();
+    console.log('iniciando proceso carga estado diario usuario:', peticion.usuario);
 
     puppeteer.use(hidden());
     let browser = await puppeteer.launch({
@@ -219,8 +220,9 @@ router.post("/obtener_estado", async(req, res) => {
         for await (const fecha of fechas) {
 
             peticion.fecha = fecha;
+            console.log('iniciando carga principal usuario:', peticion.usuario);
             await cargaPaginaPrincipal(page);
-
+            console.log('recorriendo causas estado diario usuario:', peticion.usuario);
             const rows = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
 
             let paginas = 0;
@@ -349,6 +351,7 @@ router.post("/obtener_estado", async(req, res) => {
         let mensaje = "";
         while (true) {
             try {
+                console.log('cargando pagina inicial de PJUD');
                 await page.goto(config.targeturi, {
                     waitUntil: 'networkidle0',
                 });
@@ -508,11 +511,14 @@ router.post("/obtener_estado", async(req, res) => {
     async function validateLogin(page) {
         if (page.url() === config.targeturi) {
             try {
+                console.log('ingresando login PJUD');
                 await loginEstadoDiario(page);
             } catch (error) {
                 throw error;
             }
+            console.log('consulta estado diario');
             await loadEstadoDiario(page);
+            console.log('consulta estado diario causas civiles');
             await consultaEstadoDiario(page);
             return false;
         }
