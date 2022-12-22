@@ -14,7 +14,7 @@ const config = {
         "date": 20221205
     },
     launchConf: {
-        headless: false,
+        headless: true,
         args: [
             '--no-sandbox',
             '--start-maximized',
