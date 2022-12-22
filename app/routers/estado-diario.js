@@ -532,13 +532,14 @@ router.post("/obtener_estado", async(req, res) => {
             } catch (error) {
                 throw error;
             }
-            console.log('consulta estado diario');
+            console.log('consulta estado diario competencia', competencia.nombre);
             let reintento = 0;
             while (true) {
                 try {
-
+                    await timeout(1000);
                     await page.waitForSelector(competencia.tabCompetencia);
                     await page.click(competencia.tabCompetencia);
+                    await timeout(1000);
                     try {
                         await page.waitForSelector(competencia.cargandoCompetencia);
                         await page.waitForSelector(competencia.cargandoCompetencia, {
@@ -566,36 +567,52 @@ router.post("/obtener_estado", async(req, res) => {
 
     async function loginEstadoDiario() {
         return new Promise(async(resolve, reject) => {
-            await timeout(1000);
-            await page.keyboard.press('Escape');
-            await timeout(1000);
-            await page.waitForSelector('#page-wrapper > section.banner > div > div.container.hidden-xs > div > div:nth-child(1) > div > button:nth-child(1)');
-            await page.click('#page-wrapper > section.banner > div > div.container.hidden-xs > div > div:nth-child(1) > div > button:nth-child(1)');
+            let reitento = 0;
+            while (true) {
+                try {
+                    await timeout(1000);
+                    await page.keyboard.press('Escape');
+                    await timeout(1000);
+                    await page.waitForSelector('#page-wrapper > section.banner > div > div.container.hidden-xs > div > div:nth-child(1) > div > button:nth-child(1)');
+                    await page.click('#page-wrapper > section.banner > div > div.container.hidden-xs > div > div:nth-child(1) > div > button:nth-child(1)');
 
-            await page.waitForSelector('#btnSegClave')
-            await page.click('#btnSegClave')
-            await timeout(2000);
+                    await page.waitForSelector('#btnSegClave')
+                    await page.click('#btnSegClave')
+                    await timeout(2000);
 
-            await page.waitForSelector('#rut');
-            await page.focus('#rut');
-            await page.keyboard.type(peticion.usuario);
+                    await page.waitForSelector('#rut');
+                    await page.focus('#rut');
+                    await page.keyboard.type(peticion.usuario);
 
-            await page.waitForSelector('#password')
-            await page.focus('#password');
-            await page.keyboard.type(peticion.password);
+                    await page.waitForSelector('#password')
+                    await page.focus('#password');
+                    await page.keyboard.type(peticion.password);
 
-            await page.waitForSelector('#btnSegundaClaveIngresar')
-            await page.click('#btnSegundaClaveIngresar')
-            page.on('dialog', async dialog => {
-                console.log(dialog.message()); 
-                await dialog.accept();
-                reject(dialog.message());
-            })
-            await timeout(1000);
-            await page.waitForXPath('//*[@id="sidebar"]/ul/li[4]/a');
-            const elements = await page.$x('//*[@id="sidebar"]/ul/li[4]/a');
-            await elements[0].click();
-            resolve("ok");
+                    await page.waitForSelector('#btnSegundaClaveIngresar')
+                    await page.click('#btnSegundaClaveIngresar')
+                    page.on('dialog', async dialog => {
+                        console.log(dialog.message()); 
+                        await dialog.accept();
+                        reject(dialog.message());
+                    })
+                    await timeout(1000);
+                    await page.waitForXPath('//*[@id="sidebar"]/ul/li[4]/a');
+                    const elements = await page.$x('//*[@id="sidebar"]/ul/li[4]/a');
+                    await elements[0].click();
+                    await timeout(1000);
+                    resolve("ok");
+                    break;
+                } catch (error) {
+                    reitento++;
+                    if (reitento > 3) {
+                        throw error;
+                    }
+                    await page.evaluate(() => {
+                        location.reload(true)
+                    });
+
+                }
+            }
 
         });
     };
