@@ -1,4 +1,4 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 
 const schema = mongoose.Schema({
     Detalle: String,
@@ -12,9 +12,9 @@ const schema = mongoose.Schema({
     receptores: [],
     uuid: String,
     FechaEstDia: String,
-    usuarios: []
+    usuarios: [],
 }, {
     versionKey: false
-})
+});
 
-module.exports = mongoose.model("Causa", schema)
+module.exports = mongoose.model("Causa", schema);

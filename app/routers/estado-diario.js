@@ -205,8 +205,8 @@ router.post("/obtener_estado", async(req, res) => {
 
     const page = await browser.newPage();
     await page.setCacheEnabled(false);
-    await page.setDefaultTimeout(config.timeout);
-    await page.setDefaultNavigationTimeout(config.timeout);
+    await page.setDefaultTimeout(config.minTimeout);
+    await page.setDefaultNavigationTimeout(config.MinTimeout);
 
     await page.setViewport({
         width: 1920,
@@ -214,53 +214,71 @@ router.post("/obtener_estado", async(req, res) => {
         deviceScaleFactor: 1,
     });
 
+    const competencias = [];
+    competencias.push({ nombre: 'suprema', tabCompetencia: '#nuevocolapsador > li:nth-child(1) > a', fechaCompetencia: '#fechaEstDiaSup', cargandoCompetencia: '#loadPreEstDiaSuprema', tituloDetalle: '#thTableEstDiaSuprema > tr', detalle: '#verDetalleEstDiaSuprema > tr', consultardetalle: '#btnConsultaEstDiaSuprema' });
+    competencias.push({ nombre: 'apelaciones', tabCompetencia: '#nuevocolapsador > li:nth-child(2) > a', fechaCompetencia: '#fechaEstDiaApe', cargandoCompetencia: '#loadPreEstDiaApelacion', tituloDetalle: '#thTableEstDiaApelacion > tr', detalle: '#verDetalleEstDiaApelacion > tr', consultardetalle: '#btnConsultaEstDiaApelacion' });
+    competencias.push({ nombre: 'civil', tabCompetencia: '#nuevocolapsador > li:nth-child(3) > a', fechaCompetencia: '#fechaEstDiaCiv', cargandoCompetencia: '#loadPreEstDiaCivil', tituloDetalle: '#thTableEstDiaCivil > tr', detalle: '#verDetalleEstDiaCivil > tr', consultardetalle: '#btnConsultaEstDiaCivil' });
+    competencias.push({ nombre: 'laboral', tabCompetencia: '#nuevocolapsador > li:nth-child(4) > a', fechaCompetencia: '#fechaEstDiaLab', cargandoCompetencia: '#loadPreEstDiaLaboral', tituloDetalle: '#thTableEstDiaLaboral > tr', detalle: '#verDetalleEstDiaLaboral > tr', consultardetalle: '#btnConsultaEstDiaLaboral' });
+    competencias.push({ nombre: 'penal', tabCompetencia: '#nuevocolapsador > li:nth-child(5) > a', fechaCompetencia: '#fechaEstDiaPen', cargandoCompetencia: '#loadPreEstDiaPenal', tituloDetalle: '#thTableEstDiaPenal > tr', detalle: '#verDetalleEstDiaPenal > tr', consultardetalle: '#btnConsultaEstDiaPenal' });
+    competencias.push({ nombre: 'cobranza', tabCompetencia: '#nuevocolapsador > li:nth-child(6) > a', fechaCompetencia: '#fechaEstDiaCob', cargandoCompetencia: '#loadPreEstDiaCobranza', tituloDetalle: '#thTableEstDiaCobranza > tr', detalle: '#verDetalleEstDiaCobranza > tr', consultardetalle: '#btnConsultaEstDiaCobranza' });
+    competencias.push({ nombre: 'familia', tabCompetencia: '#nuevocolapsador > li:nth-child(7) > a', fechaCompetencia: '#fechaEstDiaFam', cargandoCompetencia: '#loadPreEstDiaFamilia', tituloDetalle: '#thTableEstDiaFamilia > tr', detalle: '#verDetalleEstDiaFamilia > tr', consultardetalle: '#btnConsultaEstDiaFamilia' });
+
     try {
         let causas = [];
 
-        for await (const fecha of fechas) {
+        for (const competencia of competencias) {
 
-            peticion.fecha = fecha;
-            console.log('iniciando carga principal usuario:', peticion.usuario);
-            await cargaPaginaPrincipal(page);
-            console.log('recorriendo causas estado diario usuario:', peticion.usuario);
-            const rows = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
+            for await (const fecha of fechas) {
 
-            let paginas = 0;
-            if (rows > 1) {
+                peticion.fecha = fecha;
+                console.log('iniciando carga principal usuario:', peticion.usuario);
+                await cargaPaginaPrincipal(competencia);
+                console.log('recorriendo causas estado diario usuario:', peticion.usuario);
 
-                let obj = await obtenerCausas(page, peticion.usuario, true, fecha);
-                causas = obj.causas;
-                paginas = obj.paginas;
-                causaTitle = obj.causaTitle;
+                let detalle = competencia.detalle;
+                let rows = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
+                console.log('causas total rows:::', rows);
+                let paginas = 0;
+                if (rows > 1) {
 
-                //await page.setDefaultTimeout(config.maxTimeout);
-                //await page.setDefaultNavigationTimeout(config.maxTimeout);
 
-                let causasfilter = await getCausasBD(causas, receptor);
-                const causasdiff = [];
-                for await (const causa of causas) {
-                    let bus = causasfilter.filter(c => c.Rol === causa.Rol && c.Fecha === causa.Fecha && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
-                    if (!bus) {
-                        causasdiff.push(causa);
+                    let obj = await obtenerCausas(competencia, true, fecha);
+                    causas = obj.causas;
+                    paginas = obj.paginas;
+                    causaTitle = obj.causaTitle;
+
+                    if (competencia.nombre === "civil") {
+                        let causasfilter = await getCausasBD(causas, receptor);
+                        const causasdiff = [];
+                        for await (const causa of causas) {
+                            let bus = causasfilter.filter(c => c.Rol === causa.Rol && c.Fecha === causa.Fecha && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
+                            if (!bus) {
+                                causasdiff.push(causa);
+                            }
+                        }
+
+                        await page.setDefaultTimeout(config.timeout);
+                        await page.setDefaultNavigationTimeout(config.timeout);
+
+                        causas = await getCausasModal(competencia, causasfilter, paginas, peticion.usuario, fecha);
+
+                        causas = causas.concat(causasdiff);
+
+                        await deepReplace(causas, 'url');
+
                     }
                 }
 
-                causas = await getCausasModal(page, causasfilter, paginas, peticion.usuario, fecha);
-
-                causas = causas.concat(causasdiff);
-
-                await deepReplace(causas, 'url');
+                await page.evaluate(function() {
+                    salir();
+                });
 
             }
-
         }
 
         const end = parseHrtimeToSeconds(process.hrtime(start))
         console.info(`Tiempo de ejecución ${end} ms`);
 
-        await page.evaluate(function() {
-            salir();
-        });
         await browser.close();
         res.json({
             status: 200,
@@ -289,10 +307,10 @@ router.post("/obtener_estado", async(req, res) => {
     }
 
 
-    async function obtenerCausas(page, usuario, insert, fecha) {
+    async function obtenerCausas(competencia, insert, fecha) {
         let causas = [];
-        let causaTitle = await titulosCausas(page);
-        let { cantCausas, paginas } = await cantidadPaginas(page);
+        let causaTitle = await titulosCausas(competencia);
+        let { cantCausas, paginas } = await cantidadPaginas(competencia.detalle);
 
         console.log('cantidad de paginas:', paginas);
         console.log('cantidad de causas:', cantCausas);
@@ -301,29 +319,24 @@ router.post("/obtener_estado", async(req, res) => {
         if (paginas === 1) {
             console.log("pagina:", paginas, "de:", paginas);
 
-            result = await getCausas(page, causaTitle, paginas, fecha);
+            result = await getCausas(competencia, causaTitle, paginas, fecha);
 
             causas = causas.concat(result);
-            if (insert) {
-                await insertUpdateCausas(causas, usuario);
+            if (insert && competencia.nombre === "civil") {
+                await insertUpdateCausas(causas, peticion.usuario);
             }
         } else {
             console.log("pagina:", 1, "de:", paginas);
             for await (let num of asyncGenerator(paginas)) {
                 try {
                     console.log('obtenerCausas getCausas 1');
-                    result = await getCausas(page, causaTitle, num, fecha);
-                    if (insert) {
-                        await insertUpdateCausas(result, usuario);
+                    result = await getCausas(competencia, causaTitle, num, fecha);
+                    if (insert && competencia.nombre === "civil") {
+                        await insertUpdateCausas(result, peticion.usuario);
                     }
                     causas = causas.concat(result);
-                    await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + (result.length + 1) + ') > td > nav > ul');
-                    await page.evaluate(async(num) => {
-                        pagina(num + 1, 3);
-                    }, num);
-                    await timeout(1000);
                     console.log('cargando proxima pagina 2');
-                    result = await loop(page, causaTitle, num, fecha);
+                    result = await loop(competencia, causaTitle, num, fecha, result);
                 } catch (error) {
                     console.log("error obtenerCausas:", error);
                     await page.screenshot({ path: './error.png', fullPage: true });
@@ -332,8 +345,8 @@ router.post("/obtener_estado", async(req, res) => {
                 console.log("pagina:", num + 1, "de:", paginas);
 
             }
-            if (insert) {
-                await insertUpdateCausas(result, usuario);
+            if (insert && competencia.nombre === "civil") {
+                await insertUpdateCausas(result, peticion.usuario);
             }
             causas = causas.concat(result);
         }
@@ -346,7 +359,7 @@ router.post("/obtener_estado", async(req, res) => {
         return { causas: causas, paginas: paginas, causaTitle: causaTitle };
     }
 
-    async function cargaPaginaPrincipal(page) {
+    async function cargaPaginaPrincipal(competencia) {
         let reintento = 0;
         let mensaje = "";
         while (true) {
@@ -356,12 +369,15 @@ router.post("/obtener_estado", async(req, res) => {
                     waitUntil: 'networkidle0',
                 });
 
-                await validateLogin(page);
-                await page.waitForSelector('#verDetalleEstDiaCivil > tr');
+                await validateLogin(competencia);
+
+                await page.waitForSelector(competencia.detalle);
                 break;
             } catch (error) {
                 console.log("error de clave:::", error);
+                await page.screenshot({ path: './error.png', fullPage: true });
                 if (error === 'Usuario o clave incorrectas.') {
+                    console.log('Usuario o clave incorrectas.');
                     mensaje = error;
                     break;
                 }
@@ -508,24 +524,47 @@ router.post("/obtener_estado", async(req, res) => {
         }
     }
 
-    async function validateLogin(page) {
+    async function validateLogin(competencia) {
         if (page.url() === config.targeturi) {
             try {
                 console.log('ingresando login PJUD');
-                await loginEstadoDiario(page);
+                await loginEstadoDiario();
             } catch (error) {
                 throw error;
             }
             console.log('consulta estado diario');
-            await loadEstadoDiario(page);
-            console.log('consulta estado diario causas civiles');
-            await consultaEstadoDiario(page);
+            let reintento = 0;
+            while (true) {
+                try {
+
+                    await page.waitForSelector(competencia.tabCompetencia);
+                    await page.click(competencia.tabCompetencia);
+                    try {
+                        await page.waitForSelector(competencia.cargandoCompetencia);
+                        await page.waitForSelector(competencia.cargandoCompetencia, {
+                            hidden: true
+                        });
+                    } catch (error) {
+
+                    }
+                    break;
+                } catch (error) {
+                    reintento++;
+                    if (reintento > 3) {
+                        console.log('error validateLogin:'.error);
+                        await page.screenshot({ path: './error.png', fullPage: true });
+                        throw error;
+                    }
+                }
+            }
+            console.log('consulta estado diario ' + competencia.nombre);
+            await consultaEstadoDiario(competencia);
             return false;
         }
         return true;
     }
 
-    async function loginEstadoDiario(page) {
+    async function loginEstadoDiario() {
         return new Promise(async(resolve, reject) => {
             await timeout(1000);
             await page.keyboard.press('Escape');
@@ -553,85 +592,58 @@ router.post("/obtener_estado", async(req, res) => {
                 reject(dialog.message());
             })
             await timeout(1000);
+            await page.waitForXPath('//*[@id="sidebar"]/ul/li[4]/a');
+            const elements = await page.$x('//*[@id="sidebar"]/ul/li[4]/a');
+            await elements[0].click();
             resolve("ok");
 
         });
     };
 
-    async function loadEstadoDiario(page) {
-        let reintento = 0;
-        while (true) {
-            try {
-                await page.waitForXPath('//*[@id="sidebar"]/ul/li[4]/a');
-                const elements = await page.$x('//*[@id="sidebar"]/ul/li[4]/a');
-                await elements[0].click();
+    async function consultaEstadoDiario(competencia) {
 
-                await page.waitForSelector('#nuevocolapsador > li:nth-child(3) > a');
-                await page.click('#nuevocolapsador > li:nth-child(3) > a');
-                try {
-                    await page.waitForSelector("#loadPreEstDiaCivil");
-                    await page.waitForSelector("#loadPreEstDiaCivil", {
-                        hidden: true
-                    });
-                } catch (error) {
-
-                }
-                break;
-            } catch (error) {
-                reintento++;
-                if (reintento > 3) {
-                    console.log('error loadEstadoDiario:'.error);
-                    await page.screenshot({ path: './error.png', fullPage: true });
-                    throw error;
-                }
-            }
-        }
-    }
-
-    async function consultaEstadoDiario(page) {
-
-        await page.waitForSelector('#fechaEstDiaCiv');
-        const valor = await page.$eval("#fechaEstDiaCiv", (input) => {
+        await page.waitForSelector(competencia.fechaCompetencia);
+        const valor = await page.$eval(competencia.fechaCompetencia, (input) => {
             return input.getAttribute("value")
         })
         if (valor != peticion.fecha) {
-            await page.$eval('#fechaEstDiaCiv', el => el.value = '');
+            await page.$eval(competencia.fechaCompetencia, el => el.value = '');
             try {
-                await page.waitForSelector("#loadPreEstDiaCivil");
-                await page.waitForSelector("#loadPreEstDiaCivil", {
+                await page.waitForSelector(competencia.cargandoCompetencia);
+                await page.waitForSelector(competencia.cargandoCompetencia, {
                     hidden: true
                 })
             } catch (error) {
 
             }
-            await page.waitForSelector('#btnConsultaEstDiaCivil', { visible: true });
+            await page.waitForSelector(competencia.consultardetalle, { visible: true });
 
-            await page.click('#btnConsultaEstDiaCivil');
+            await page.click(competencia.consultardetalle);
             try {
-                await page.waitForSelector("#loadPreEstDiaCivil");
-                await page.waitForSelector("#loadPreEstDiaCivil", {
+                await page.waitForSelector(competencia.cargandoCompetencia);
+                await page.waitForSelector(competencia.cargandoCompetencia, {
                     hidden: true
                 })
             } catch (error) {
 
             }
-            await page.waitForSelector('#fechaEstDiaCiv', { visible: true });
-            await page.type('#fechaEstDiaCiv', peticion.fecha, { delay: 10 });
+            await page.waitForSelector(competencia.fechaCompetencia, { visible: true });
+            await page.type(competencia.fechaCompetencia, peticion.fecha, { delay: 10 });
             try {
-                await page.waitForSelector("#loadPreEstDiaCivil");
-                await page.waitForSelector("#loadPreEstDiaCivil", {
+                await page.waitForSelector(competencia.cargandoCompetencia);
+                await page.waitForSelector(competencia.cargandoCompetencia, {
                     hidden: true
                 });
             } catch (error) {
 
             }
-            await page.waitForSelector('#btnConsultaEstDiaCivil', { visible: true });
-            await page.click('#btnConsultaEstDiaCivil');
+            await page.waitForSelector(competencia.consultardetalle, { visible: true });
+            await page.click(competencia.consultardetalle);
         }
 
         try {
-            await page.waitForSelector("#loadPreEstDiaCivil");
-            await page.waitForSelector("#loadPreEstDiaCivil", {
+            await page.waitForSelector(competencia.cargandoCompetencia, );
+            await page.waitForSelector(competencia.cargandoCompetencia, {
                 hidden: true
             });
         } catch (error) {
@@ -639,8 +651,8 @@ router.post("/obtener_estado", async(req, res) => {
         }
     }
 
-    async function refreshDetalle(page, usuario, dataRows, result, fecha) {
-        let { causas } = await obtenerCausas(page, usuario, false, fecha);
+    async function refreshDetalle(competencia, dataRows, result, fecha) {
+        let { causas } = await obtenerCausas(competencia, false, fecha);
 
         const retorno = [];
         for await (let causa of result) {
@@ -655,21 +667,24 @@ router.post("/obtener_estado", async(req, res) => {
         return retorno;
     }
 
-    async function getCausasModal(page, result, paginas, usuario, fecha) {
+    async function getCausasModal(competencia, result, paginas, usuario, fecha) {
         let dataRows = []
         let i = 1;
         const total = result.length;
         while (true) {
             let reload = false;
             for await (const causa of result) {
-                await validateLogin(page);
+                await validateLogin(competencia);
                 console.log('procesando causa ', i, ' de ', total, ' detalle ', causa);
                 await deleteDoctos([causa]);
-                const modalContent = await openRowModal(causa, usuario, fecha);
+                console.log("antes de abrir el modal");
+                const modalContent = await openRowModal(competencia, causa, usuario, fecha);
+                console.log("despuedes de abrir el modal:", modalContent);
                 if (modalContent === "Causa No Disponible") {
                     throw Error("Causa No Disponible");
                 }
                 if (modalContent.length === 0) {
+                    console.log('refrescar proceso');
                     reload = true;
                     break;
                 }
@@ -679,12 +694,39 @@ router.post("/obtener_estado", async(req, res) => {
                 i++;
             }
             if (reload) {
-                await page.evaluate(() => {
-                    location.reload(true)
-                });
-                await loadEstadoDiario(page);
-                await consultaEstadoDiario(page);
-                result = await refreshDetalle(page, paginas, dataRows, result, fecha);
+                let reintento = 0;
+                while (true) {
+                    try {
+                        await page.evaluate(() => {
+                            location.reload(true)
+                        });
+                        console.log('refrescando pagina');
+                        await timeout(1000);
+                        await page.waitForXPath('//*[@id="sidebar"]/ul/li[4]/a');
+                        const elements = await page.$x('//*[@id="sidebar"]/ul/li[4]/a');
+                        await elements[0].click();
+                        await page.waitForSelector('#nuevocolapsador > li:nth-child(3) > a');
+                        await page.click('#nuevocolapsador > li:nth-child(3) > a');
+                        try {
+                            await page.waitForSelector("#loadPreEstDiaCivil");
+                            await page.waitForSelector("#loadPreEstDiaCivil", {
+                                hidden: true
+                            });
+                        } catch (error) {
+
+                        }
+                        break;
+                    } catch (error) {
+                        console.log('error getCausasModal:'.error, ' reintento: ', reintento);
+                        reintento++;
+                        if (reintento > 3) {
+                            await page.screenshot({ path: './error.png', fullPage: true });
+                            throw error;
+                        }
+                    }
+                }
+                await consultaEstadoDiario(competencia);
+                result = await refreshDetalle(competencia, dataRows, result, fecha);
                 continue;
             }
             break;
@@ -692,33 +734,46 @@ router.post("/obtener_estado", async(req, res) => {
         return dataRows;
     }
 
-    async function loop(page, causaTitle, num, fecha) {
+    async function loop(competencia, causaTitle, num, fecha, result) {
         let retorno = [];
         let reintento = 0;
         while (true) {
             try {
                 try {
-                    await page.waitForSelector('#verDetalleEstDiaCivil > tr');
-                    const causasPagina = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
-                    //const causasPagina = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
-                    await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > div > b');
+                    let detalle = competencia.detalle;
+                    await page.waitForSelector(detalle);
+                    //await page.waitForSelector(detalle + ':nth-child(' + (result.length + 1) + ') > td > nav > ul');
+                    await page.evaluate(async(num) => {
+                        pagina(num + 1, 3);
+                    }, num);
+                    await timeout(1000);
+                    await page.waitForSelector(detalle);
+                    let causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
+                    await page.waitForSelector(competencia.detalle + ':nth-child(' + causasPagina + ') > td > nav > div > b');
                     if (causasPagina > 1) {
                         let pagina = '0';
-                        let element = await page.$('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > ul > li.page-item.active > span')
+                        let element = await page.$(competencia.detalle + ':nth-child(' + causasPagina + ') > td > nav > ul > li.page-item.active > span')
                         if (element) {
-                            pagina = await page.evaluate(el => el.textContent, element)
+                            pagina = await page.evaluate(el => el.textContent, element);
+                            console.log('pagina actual:', pagina, 'pagina siguiente:', num + 1);
                             if (parseInt(pagina) === (num + 1)) {
                                 console.log('loop obtener causas 1');
-                                retorno = await getCausas(page, causaTitle, num, fecha);
+                                retorno = await getCausas(competencia, causaTitle, num, fecha);
                                 break;
-                            } else {
-                                console.log('continue loop obtener causas 3');
-                                continue;
+                                //} else {
+                                //    console.log('continue loop obtener causas 3');
+                                //    continue;
                             }
+                            //await timeout(1000);
+                            reintento++;
+                            if (reintento > 60) {
+                                throw Error("no cambio de pagina");
+                            }
+                            continue;
                         } else {
                             if (causasPagina < 15) {
                                 console.log('loop obtener causas 4');
-                                retorno = await getCausas(page, causaTitle, num, fecha);
+                                retorno = await getCausas(competencia, causaTitle, num, fecha);
                                 break;
                             } else {
                                 console.log('continue loop obtener causas 5');
@@ -728,27 +783,37 @@ router.post("/obtener_estado", async(req, res) => {
 
                     }
                 } catch (error) {
-                    console.log("error en loop 1:", error);
-                    await page.screenshot({ path: './error.png', fullPage: true });
-                    if (page.url() === config.targeturi) {
-                        console.log("error en loop 2:", page.url());
+                    if (error.message && error.message === "no cambio de pagina") {
                         throw error;
                     }
+                    console.log("error en loop 1:", error);
+                    await page.screenshot({ path: './error.png', fullPage: true });
+                    await validateLogin(competencia);
+                    /*if (page.url() === config.targeturi) {
+                        console.log("error en loop 2:", page.url());
+                        throw error;
+                    }*/
                     continue;
                 }
             } catch (error) {
+                if (error.message && error.message === "no cambio de pagina") {
+                    throw error;
+                }
                 console.log("error en loop 3:", error);
                 await page.screenshot({ path: './error.png', fullPage: true });
                 reintento++;
                 if (reintento > 3) {
                     throw error;
                 }
-                if (!await validateLogin(page)) {
+                if (!await validateLogin(competencia)) {
                     try {
-                        await page.waitForSelector('#verDetalleEstDiaCivil > tr');
-                        //const causasPagina = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
-                        const causasPagina = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
-                        await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > ul');
+                        await page.waitForSelector(competencia.detalle);
+                        //let causasPagina = 0
+                        //if (competencia.detalle === '#verDetalleEstDiaCivil > tr') {
+                        const detalle = competencia.detalle;
+                        const causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
+                        //}
+                        await page.waitForSelector(competencia.detalle + ':nth-child(' + causasPagina + ') > td > nav > ul');
                         await page.evaluate(async(num) => {
                             pagina(num + 1, 3);
                         }, num);
@@ -782,23 +847,23 @@ router.post("/obtener_estado", async(req, res) => {
         }
     }
 
-    async function getCausas(page, causaTitle, num, fecha) {
+    async function getCausas(competencia, causaTitle, num, fecha) {
         try {
             let result = [];
             let reintento = 0;
             while (true) {
                 try {
                     try {
-                        await page.waitForSelector("#loadPreEstDiaCivil");
-                        await page.waitForSelector("#loadPreEstDiaCivil", {
+                        await page.waitForSelector(competencia.cargandoCompetencia);
+                        await page.waitForSelector(competencia.cargandoCompetencia, {
                             hidden: true
                         });
                     } catch (error) {
 
                     }
 
-                    await page.waitForSelector('#verDetalleEstDiaCivil > tr');
-                    result = await page.$$eval('#verDetalleEstDiaCivil > tr', rows => {
+                    await page.waitForSelector(competencia.detalle);
+                    result = await page.$$eval(competencia.detalle, rows => {
                         return Array.from(rows, row => {
                             const columns = row.querySelectorAll('td');
                             return Array.from(columns, col => {
@@ -821,13 +886,16 @@ router.post("/obtener_estado", async(req, res) => {
                         throw error;
                     }
                     try {
-                        if (!await validateLogin(page)) {
+                        if (!await validateLogin(competencia)) {
                             try {
                                 console.log('volvio a cargar pagina de inicio');
-                                await page.waitForSelector('#verDetalleEstDiaCivil > tr');
-                                //const causasPagina = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
-                                const causasPagina = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
-                                await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causasPagina + ') > td > nav > ul');
+                                let detalle = competencia.detalle;
+                                await page.waitForSelector(detalle);
+                                //let causasPagina = 0;
+                                //if (detalle === '#verDetalleEstDiaCivil > tr') {
+                                const causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
+                                //}
+                                await page.waitForSelector(detalle + ':nth-child(' + causasPagina + ') > td > nav > ul');
                                 await page.evaluate(async(num) => {
                                     pagina(num + 1, 3);
                                 }, num);
@@ -868,6 +936,7 @@ router.post("/obtener_estado", async(req, res) => {
                 }
                 causa.uuid = uuidv4();
                 causa.FechaEstDia = fecha;
+                causa.competencia = competencia.nombre;
                 causas.push(causa);
             }
             return causas;
@@ -879,7 +948,7 @@ router.post("/obtener_estado", async(req, res) => {
 
     }
 
-    async function openRowModal(row, usuario, fecha) {
+    async function openRowModal(competencia, row, usuario, fecha) {
         try {
             let expirado = false;
             let intentos = 0;
@@ -904,6 +973,8 @@ router.post("/obtener_estado", async(req, res) => {
                         });
 
                     } catch (error) {
+                        console.log("error en openRowModal 1:::", error);
+                        await page.screenshot({ path: './error.png', fullPage: true });
                         for (let cont = 1; cont <= 3; cont++) {
                             try {
                                 await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p', { timeout: 1000 });
@@ -951,9 +1022,9 @@ router.post("/obtener_estado", async(req, res) => {
                         await timeout(1000);
                     }
 
-
+                    console.log("antes de abrir cuaderno");
                     let cuaderno = await getModalCombo(modalSelector, row, usuario);
-
+                    console.log("despues de abrir cuaderno");
                     if (receptor) {
                         await timeout(1000);
                     }
@@ -972,10 +1043,11 @@ router.post("/obtener_estado", async(req, res) => {
 
                     break;
                 } catch (error) {
+                    console.log("error openRowModal 2:::", error);
                     await page.screenshot({ path: './error.png', fullPage: true });
                     while (true) {
                         try {
-                            await validateLogin(page);
+                            await validateLogin(competencia);
                             break;
                         } catch (err) {
                             await page.screenshot({ path: './error.png', fullPage: true });
@@ -999,7 +1071,7 @@ router.post("/obtener_estado", async(req, res) => {
             return row || [];
         } catch (error) {
             await page.screenshot({ path: './error.png', fullPage: true })
-                //console.log("error en causa:", row, "error:", error);
+            console.log("error openRowModal:", error);
             throw error;
             //await page.screenshot({ path: './error.png', fullPage: true })
             //await browser.close();
@@ -1088,9 +1160,13 @@ router.post("/obtener_estado", async(req, res) => {
                     })
                 })
 
+                console.log("getModalCombo opt:", opt, " selector.length:", selector.length)
+
                 if (selector.length >= 1) {
                     optSelcted = selector[opt]
                 }
+
+                console.log("optSelcted.value:::", optSelcted.value);
 
                 if (selector.length > 1) {
                     await page.waitForSelector(`${modalSelector} select `, {
@@ -1110,7 +1186,7 @@ router.post("/obtener_estado", async(req, res) => {
                 await page.waitForSelector(`${modalSelector} .tab-content table tr`, {
                     visible: true
                 })
-
+                console.log(" obtener tabs de causas");
                 const tabsSelector = `${modalSelector} .modal-content .modal-body .tab-content .tab-pane`
                 const tabContent = await page.$$eval(tabsSelector, panes => {
                     return Array.from(panes, pane => {
@@ -1151,6 +1227,8 @@ router.post("/obtener_estado", async(req, res) => {
                     })
                 })
 
+                console.log(" recorrer tabs");
+
                 let tabs = {};
                 for await (const tab of tabContent) {
                     let causas = [];
@@ -1180,6 +1258,8 @@ router.post("/obtener_estado", async(req, res) => {
                     tabs[tab.tab] = causas;
                 }
 
+                console.log(" fin de recorrer tabs ", tabs, optSelcted);
+
                 if (selector.length >= 1) {
                     optionsTabs = {
                         cuaderno: optSelcted != undefined ? optSelcted.label : "no encontrado",
@@ -1198,7 +1278,8 @@ router.post("/obtener_estado", async(req, res) => {
 
             return totalOptions;
         } catch (error) {
-            await page.screenshot({ path: './error.png', fullPage: true })
+            console.log(" error en getModalCombo:::", error);
+            await page.screenshot({ path: './error.png', fullPage: true });
             throw error;
 
         }
@@ -1243,15 +1324,17 @@ router.post("/obtener_estado", async(req, res) => {
         });
     }
 
-    async function cantidadPaginas(page) {
+    async function cantidadPaginas(detalle) {
 
-        //const causas = await page.$$eval('#verDetalleEstDiaCivil > tr', el => el.length);
-        const causas = (await page.evaluate(() => { return Array.from(document.querySelectorAll('#verDetalleEstDiaCivil > tr')) })).length;
+        //let causas = 0;
+        //if (detalle === "#verDetalleEstDiaCivil > tr") {
+        let causas = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
+        //}
         let paginas = 0;
         let cantCausas = 0;
         if (causas > 1) {
-            await page.waitForSelector('#verDetalleEstDiaCivil > tr:nth-child(' + causas + ') > td > nav > div > b');
-            let element = await page.$('#verDetalleEstDiaCivil > tr:nth-child(' + causas + ') > td > nav > div > b')
+            await page.waitForSelector(detalle + ':nth-child(' + causas + ') > td > nav > div > b');
+            let element = await page.$(detalle + ':nth-child(' + causas + ') > td > nav > div > b')
             cantCausas = await page.evaluate(el => el.textContent, element)
             paginas = Math.trunc(cantCausas / 15) + 1;
 
@@ -1281,15 +1364,16 @@ router.post("/obtener_estado", async(req, res) => {
         return fecha;
     }
 
-    async function titulosCausas(page) {
-        await page.waitForSelector('#thTableEstDiaCivil > tr', { visible: true });
-        const titleLength = await page.$$eval('#thTableEstDiaCivil > tr > th', el => el.length);
+    async function titulosCausas(competencia) {
+        await page.waitForSelector(competencia.tituloDetalle, { visible: true });
+        const titleLength = await page.$$eval(competencia.tituloDetalle + ' > th', el => el.length);
         let titles = [];
 
         if (titleLength > 1) {
             titles.push('Detalle');
             for (let i = 2; i <= titleLength; i++) {
-                titles.push(await page.evaluate(el => el.innerText, await page.$(`#thTableEstDiaCivil > tr > th:nth-child(${i})`)));
+                let tituloDetalle = competencia.tituloDetalle;
+                titles.push(await page.evaluate(el => el.innerText, await page.$(`${tituloDetalle} > th:nth-child(${i})`)));
             }
         }
         return titles;
