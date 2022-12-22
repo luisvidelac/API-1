@@ -607,8 +607,8 @@ router.post("/obtener_estado", async(req, res) => {
                     if (reitento > 3) {
                         throw error;
                     }
-                    await page.evaluate(() => {
-                        location.reload(true)
+                    await page.goto(config.targeturi, {
+                        waitUntil: 'networkidle0',
                     });
 
                 }
