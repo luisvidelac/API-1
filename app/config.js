@@ -1,8 +1,7 @@
 const config = {
     delay: 1000,
     defTimeout: 0,
-    timeout: 60000,
-    minTimeout: 30000,
+    timeout: 10000,
     url: "https://oficinajudicialvirtual.pjud.cl/",
     targeturi: "https://oficinajudicialvirtual.pjud.cl/home/index.php",
     homeUrl: "https://oficinajudicialvirtual.pjud.cl/indexN.php",
@@ -14,7 +13,7 @@ const config = {
         "date": 20221205
     },
     launchConf: {
-        headless: true,
+        headless: false,
         args: [
             '--no-sandbox',
             '--start-maximized',

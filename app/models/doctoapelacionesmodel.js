@@ -5,9 +5,9 @@ const schema = mongoose.Schema({
     "contentype": String,
     "base64": String,
     "url": String,
-    "Rol": String,
+    "N° Ingreso": String,
+    "Corte": String,
     "Caratulado": String,
-    "Tribunal": String,
     "FechaEstDia": String,
     "usuarios": [],
     "created_at": { type: Date },
@@ -17,4 +17,4 @@ const schema = mongoose.Schema({
     versionKey: false
 });
 
-module.exports = mongoose.model("Docto", schema);
+module.exports = mongoose.model("DoctoApelaciones", schema);

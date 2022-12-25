@@ -2,15 +2,13 @@ const mongoose = require("mongoose");
 
 const schema = mongoose.Schema({
     "Detalle": String,
-    "Rol": String,
-    "Fecha": String,
+    "N° Ingreso": String,
+    "Ubicacion": String,
+    "Fecha Ubicación": String,
+    "Corte": String,
     "Caratulado": String,
-    "Tribunal": String,
     "created_at": { type: Date },
     "updated_at": { type: Date, required: true, default: '01/01/1990' },
-    "updated_at_receptores": { type: Date, required: true, default: '01/01/1990' },
-    "cuadernos": [],
-    "receptores": [],
     "uuid": String,
     "FechaEstDia": String,
     "usuarios": [],
@@ -19,4 +17,4 @@ const schema = mongoose.Schema({
     versionKey: false
 });
 
-module.exports = mongoose.model("Causa", schema);
+module.exports = mongoose.model("CausaApelacion", schema);
