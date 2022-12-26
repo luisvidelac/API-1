@@ -35,6 +35,9 @@ router.get("/*", (req, res) => {
  *              receptor:
  *                  type: boolean
  *                  description: Obtener notificacion receptores
+ *              competencia:
+ *                  type: string
+ *                  description: Competencia
  *              fecha:
  *                  type: string
  *                  description: Fecha consulta dd/mm/yyy (opcional) fecha de consulta estado. Por defecto toma la fecha actual y resta 1 dia para la consulta. Si es Lunes consulta Viernes y Sabado
@@ -45,6 +48,7 @@ router.get("/*", (req, res) => {
  *              usuario: "12345678"
  *              password: password
  *              receptor: true
+ *              competencia: civil
  *              fecha: "31/12/2022"
  *      Error:
  *          type: object
@@ -178,7 +182,7 @@ router.post("/obtener_estado", async(req, res) => {
     if (!peticion.competencia || peticion.competencia.length == 0) {
         res.json({
             status: 400,
-            msg: "competencia es obligatoria",
+            msg: "competencia es obligatoria ej: civil",
             data: []
         })
         return;
@@ -219,11 +223,7 @@ router.post("/obtener_estado", async(req, res) => {
     await page.setDefaultTimeout(config.timeout);
     await page.setDefaultNavigationTimeout(config.timeout);
 
-    await page.setViewport({
-        width: 1920,
-        height: 1280,
-        deviceScaleFactor: 1,
-    });
+    await page.setViewport({ width: 2000, height: 4000 })
 
     const competencias = [];
     competencias.push({ nombre: 'suprema', tabCompetencia: '#nuevocolapsador > li:nth-child(1) > a', fechaCompetencia: '#fechaEstDiaSup', cargandoCompetencia: '#loadPreEstDiaSuprema', tituloDetalle: '#thTableEstDiaSuprema > tr', detalle: '#verDetalleEstDiaSuprema > tr', consultardetalle: '#btnConsultaEstDiaSuprema' });
@@ -247,9 +247,6 @@ router.post("/obtener_estado", async(req, res) => {
     }
     try {
         let causas = [];
-
-
-        //for (const competencia of competencias) {
 
         for await (const fecha of fechas) {
 
@@ -280,8 +277,8 @@ router.post("/obtener_estado", async(req, res) => {
                         }
                     }
 
-                    await page.setDefaultTimeout(config.timeout);
-                    await page.setDefaultNavigationTimeout(config.timeout);
+                    await page.setDefaultTimeout(config.maxTimeout);
+                    await page.setDefaultNavigationTimeout(config.maxTimeout);
 
                     causas = await getCausasApelacionesModal(competencia, causasfilter, paginas, peticion.usuario, fecha, receptor);
 
@@ -301,8 +298,8 @@ router.post("/obtener_estado", async(req, res) => {
                         }
                     }
 
-                    await page.setDefaultTimeout(config.timeout);
-                    await page.setDefaultNavigationTimeout(config.timeout);
+                    await page.setDefaultTimeout(config.maxTimeout);
+                    await page.setDefaultNavigationTimeout(config.maxTimeout);
 
                     causas = await getCausasModal(competencia, causasfilter, paginas, peticion.usuario, fecha, receptor);
 
@@ -318,7 +315,6 @@ router.post("/obtener_estado", async(req, res) => {
             });
 
         }
-        //}
 
         const end = parseHrtimeToSeconds(process.hrtime(start))
         console.info(`Tiempo de ejecución ${end} ms`);
@@ -335,9 +331,11 @@ router.post("/obtener_estado", async(req, res) => {
         if (page) {
             await page.screenshot({ path: './error.png' })
             if (page.url() != config.targeturi) {
-                await page.evaluate(function() {
-                    salir();
-                });
+                try {
+                    await page.evaluate(function() {
+                        salir();
+                    });
+                } catch (error) {}
             }
         }
         if (browser) {
@@ -698,18 +696,19 @@ router.post("/obtener_estado", async(req, res) => {
                     } catch (error) {
 
                     }
+                    console.log('consulta estado diario ' + competencia.nombre);
+                    await consultaEstadoDiario(competencia);
                     break;
                 } catch (error) {
+                    console.log('error validateLogin 1:', error, ' reintento: ', reintento);
                     reintento++;
                     if (reintento > 3) {
-                        console.log('error validateLogin:'.error);
+                        console.log('error validateLogin 2:', error, ' reintento: ', reintento);
                         await page.screenshot({ path: './error.png' });
                         throw error;
                     }
                 }
             }
-            console.log('consulta estado diario ' + competencia.nombre);
-            await consultaEstadoDiario(competencia);
             return false;
         }
         return true;
@@ -901,9 +900,9 @@ router.post("/obtener_estado", async(req, res) => {
                 await insertUpdateCausas([modalContent], usuario);
                 dataRows.push(modalContent)
                 i++;
-                if (receptor) {
+                /*if (receptor) {
                     await refreshCausasCiviles(competencia);
-                }
+                }*/
             }
             if (reload) {
                 await refreshCausasCiviles(competencia);
@@ -938,17 +937,18 @@ router.post("/obtener_estado", async(req, res) => {
                 } catch (error) {
 
                 }
+                await consultaEstadoDiario(competencia);
                 break;
             } catch (error) {
-                console.log('error refreshCausasCiviles:'.error, ' reintento: ', reintento);
+                console.log('error refreshCausasCiviles 1:', error, ' reintento: ', reintento);
                 reintento++;
                 if (reintento > 3) {
+                    console.log('error refreshCausasCiviles 2:', error, ' reintento: ', reintento);
                     await page.screenshot({ path: './error.png' });
                     throw error;
                 }
             }
         }
-        await consultaEstadoDiario(competencia);
     }
 
     async function loop(competencia, causaTitle, num, fecha, result) {
@@ -974,7 +974,7 @@ router.post("/obtener_estado", async(req, res) => {
                     await page.evaluate(async(num) => {
                         pagina(num + 1, 3);
                     }, num);
-                    await timeout(1000);
+                    await timeout(10000);
                     await page.waitForSelector(detalle);
                     causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
                     await page.waitForSelector(competencia.detalle + ':nth-child(' + causasPagina + ') > td > nav > div > b');
@@ -1027,14 +1027,17 @@ router.post("/obtener_estado", async(req, res) => {
                 }
                 if (!await validateLogin(competencia)) {
                     try {
-                        await page.waitForSelector(competencia.detalle);
                         const detalle = competencia.detalle;
+                        await page.waitForSelector(detalle);
                         const causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
-                        await page.waitForSelector(competencia.detalle + ':nth-child(' + causasPagina + ') > td > nav > ul');
+                        await page.waitForSelector(detalle + ':nth-child(' + causasPagina + ') > td > nav > ul');
                         await page.evaluate(async(num) => {
                             pagina(num + 1, 3);
                         }, num);
-                        await timeout(1000);
+                        await timeout(10000);
+                        await page.waitForSelector(detalle);
+                        causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
+                        await page.waitForSelector(competencia.detalle + ':nth-child(' + causasPagina + ') > td > nav > div > b');
                         console.log('cargando proxima pagina 3');
                         continue;
                     } catch (error) {
@@ -1111,7 +1114,10 @@ router.post("/obtener_estado", async(req, res) => {
                                 await page.evaluate(async(num) => {
                                     pagina(num + 1, 3);
                                 }, num);
-                                await timeout(1000);
+                                await timeout(10000);
+                                await page.waitForSelector(detalle);
+                                causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
+                                await page.waitForSelector(competencia.detalle + ':nth-child(' + causasPagina + ') > td > nav > div > b');
                                 console.log('cargando proxima pagina 1');
                                 continue;
                             } catch (error) {
@@ -1180,6 +1186,7 @@ router.post("/obtener_estado", async(req, res) => {
                     }
 
                     try {
+                        await page.evaluate(() => { window.scrollBy(0, 0); });
                         await page.waitForSelector(`${modalSelector} .tab-content table tr`, {
                             visible: true
                         });
@@ -1209,7 +1216,8 @@ router.post("/obtener_estado", async(req, res) => {
 
                     if (receptor) {
                         await timeout(1000);
-
+                        await page.evaluate(() => { window.scrollBy(0, 0); });
+                        await timeout(1000);
                         await page.waitForSelector(`#modalDetalleEstDiaCivil > div > div > div.modal-body > div > div:nth-child(2) > table > tbody > tr > td:nth-child(2) > a > i`, {
                             visible: true
                         });
@@ -1217,8 +1225,6 @@ router.post("/obtener_estado", async(req, res) => {
                         const jsModalReceptor = await page.evaluate(() => document.querySelector("#modalDetalleEstDiaCivil > div > div > div.modal-body > div > div:nth-child(2) > table > tbody > tr > td:nth-child(2) > a").getAttribute("onclick"));
 
                         await page.evaluate(`${jsModalReceptor}`);
-
-                        //await page.click(`#modalDetalleEstDiaCivil > div > div > div.modal-body > div > div:nth-child(2) > table > tbody > tr > td:nth-child(2) > a > i`);
 
                         await timeout(1000);
                         const modalReceptor = '#modalReceptorCivil';
@@ -1234,12 +1240,12 @@ router.post("/obtener_estado", async(req, res) => {
 
                         await timeout(1000);
                     }
-                    if (!receptor) {
-                        console.log("antes de abrir cuaderno");
-                        let cuaderno = await getModalCombo(modalSelector, row, usuario);
-                        row['cuadernos'] = cuaderno;
-                        console.log("despues de abrir cuaderno");
-                    }
+
+                    console.log("antes de abrir cuaderno");
+                    let cuaderno = await getModalCombo(modalSelector, row, usuario);
+                    row['cuadernos'] = cuaderno;
+                    console.log("despues de abrir cuaderno");
+
                     if (receptor) {
                         await timeout(1000);
                     }
@@ -1257,26 +1263,16 @@ router.post("/obtener_estado", async(req, res) => {
 
                     break;
                 } catch (error) {
+                    intentos++;
+                    if (intentos > 3) {
+                        break;
+                    }
                     console.log("error openRowModal 2:::", error);
                     await page.screenshot({ path: './error.png' });
-                    while (true) {
-                        try {
-                            await validateLogin(competencia);
-                            break;
-                        } catch (err) {
-                            await page.screenshot({ path: './error.png' });
-                            intentos++;
-                            if (intentos > 3) {
-                                break;
-                            }
-                        }
-                    }
+                    try {
+                        await validateLogin(competencia);
+                    } catch (err) {}
                 }
-                if (intentos > 3) {
-
-                    break;
-                }
-
             }
             if (intentos > 3) {
                 throw "nunca cargo";
@@ -1303,7 +1299,7 @@ router.post("/obtener_estado", async(req, res) => {
         }
 
         try {
-            await page.waitForSelector(`${modal} > div > div > div.modal-body > div > div > div > center > div`, { visible: true });
+            await page.waitForSelector(`${modal} > div > div > div.modal-body > div > div > div > center > div`, { visible: true, timeout: 10000 });
             return receptores;
         } catch (error) {
             await page.waitForSelector(`${modal} > div > div > div.modal-body > div > div > div > table > tbody > tr`, { visible: true });
