@@ -1800,9 +1800,15 @@ router.post("/obtener_estado", async(req, res) => {
                     if (causasPagina === 1) {
                         continue;
                     }
-                    await page.evaluate(async(num) => {
-                        pagina(num + 1, 3);
-                    }, num);
+                    if (competencia.nombre === 'civil') {
+                        await page.evaluate(async(num) => {
+                            pagina(num + 1, 3);
+                        }, num);
+                    } else {
+                        await page.evaluate(async(num) => {
+                            pagina(num + 1, 2);
+                        }, num);
+                    }
                     await timeout(10000);
                     await page.waitForSelector(detalle);
                     causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
@@ -1860,9 +1866,15 @@ router.post("/obtener_estado", async(req, res) => {
                         await page.waitForSelector(detalle);
                         const causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
                         await page.waitForSelector(detalle + ':nth-child(' + causasPagina + ') > td > nav > ul');
-                        await page.evaluate(async(num) => {
-                            pagina(num + 1, 3);
-                        }, num);
+                        if (competencia.nombre === 'civil') {
+                            await page.evaluate(async(num) => {
+                                pagina(num + 1, 3);
+                            }, num);
+                        } else {
+                            await page.evaluate(async(num) => {
+                                pagina(num + 1, 2);
+                            }, num);
+                        }
                         await timeout(10000);
                         await page.waitForSelector(detalle);
                         causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
@@ -1940,9 +1952,15 @@ router.post("/obtener_estado", async(req, res) => {
                                 await page.waitForSelector(detalle);
                                 const causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
                                 await page.waitForSelector(detalle + ':nth-child(' + causasPagina + ') > td > nav > ul');
-                                await page.evaluate(async(num) => {
-                                    pagina(num + 1, 3);
-                                }, num);
+                                if (competencia.nombre === 'civil') {
+                                    await page.evaluate(async(num) => {
+                                        pagina(num + 1, 3);
+                                    }, num);
+                                } else {
+                                    await page.evaluate(async(num) => {
+                                        pagina(num + 1, 2);
+                                    }, num);
+                                }
                                 await timeout(10000);
                                 await page.waitForSelector(detalle);
                                 causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
@@ -2976,4 +2994,4 @@ router.post("/obtener_estado", async(req, res) => {
 
 })
 
-module.exports = router
+module.exports = router;
