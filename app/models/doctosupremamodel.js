@@ -1,4 +1,4 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 
 const schema = mongoose.Schema({
     "uuid": String,
@@ -6,7 +6,7 @@ const schema = mongoose.Schema({
     "base64": String,
     "url": String,
     "N° Ingreso": String,
-    "Corte": String,
+    "Tipo Recurso": String,
     "Caratulado": String,
     "FechaEstDia": String,
     "usuarios": [],
@@ -16,4 +16,4 @@ const schema = mongoose.Schema({
     versionKey: false
 });
 
-module.exports = mongoose.model("DoctoApelaciones", schema);
+module.exports = mongoose.model("DoctoSuprema", schema);

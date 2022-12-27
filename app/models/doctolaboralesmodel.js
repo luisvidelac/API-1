@@ -5,16 +5,16 @@ const schema = mongoose.Schema({
     "contentype": String,
     "base64": String,
     "url": String,
-    "Rol": String,
+    "Rit": String,
+    "Ruc": String,
     "Caratulado": String,
     "Tribunal": String,
     "FechaEstDia": String,
     "usuarios": [],
     "created_at": { type: Date },
-    "updated_at": { type: Date, required: true, default: Date.now },
-    "competencia": String
+    "updated_at": { type: Date, required: true, default: Date.now }
 }, {
     versionKey: false
 });
 
-module.exports = mongoose.model("Docto", schema);
+module.exports = mongoose.model("DoctoLaborales", schema);
