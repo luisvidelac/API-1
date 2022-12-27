@@ -129,7 +129,7 @@ http://localhost:3000/api-doc
 { 'competencia': 'apelaciones' }
 { 'competencia': 'civil', 'receptor': true } // receptor es opcional
 { 'competencia': 'laboral' }
-{ 'competencia': 'cobranza', 'reecptor': true } // receptor es opcional
+{ 'competencia': 'cobranza', 'receptor': true } // receptor es opcional
 { 'competencia': 'familia' }
 
 ## Ejemplos curls
