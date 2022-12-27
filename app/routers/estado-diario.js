@@ -1800,13 +1800,34 @@ router.post("/obtener_estado", async(req, res) => {
                     if (causasPagina === 1) {
                         continue;
                     }
+                    if (competencia.nombre === 'suprema') {
+                        await page.evaluate(async(num) => {
+                            pagina(num + 1, 1);
+                        }, num);
+                    }
+                    if (competencia.nombre === 'apelaciones') {
+                        await page.evaluate(async(num) => {
+                            pagina(num + 1, 2);
+                        }, num);
+                    }
                     if (competencia.nombre === 'civil') {
                         await page.evaluate(async(num) => {
                             pagina(num + 1, 3);
                         }, num);
-                    } else {
+                    }
+                    if (competencia.nombre === 'laboral') {
                         await page.evaluate(async(num) => {
-                            pagina(num + 1, 2);
+                            pagina(num + 1, 4);
+                        }, num);
+                    }
+                    if (competencia.nombre === 'cobranza') {
+                        await page.evaluate(async(num) => {
+                            pagina(num + 1, 6);
+                        }, num);
+                    }
+                    if (competencia.nombre === 'familia') {
+                        await page.evaluate(async(num) => {
+                            pagina(num + 1, 7);
                         }, num);
                     }
                     await timeout(10000);
@@ -1866,13 +1887,34 @@ router.post("/obtener_estado", async(req, res) => {
                         await page.waitForSelector(detalle);
                         const causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
                         await page.waitForSelector(detalle + ':nth-child(' + causasPagina + ') > td > nav > ul');
+                        if (competencia.nombre === 'suprema') {
+                            await page.evaluate(async(num) => {
+                                pagina(num + 1, 1);
+                            }, num);
+                        }
+                        if (competencia.nombre === 'apelaciones') {
+                            await page.evaluate(async(num) => {
+                                pagina(num + 1, 2);
+                            }, num);
+                        }
                         if (competencia.nombre === 'civil') {
                             await page.evaluate(async(num) => {
                                 pagina(num + 1, 3);
                             }, num);
-                        } else {
+                        }
+                        if (competencia.nombre === 'laboral') {
                             await page.evaluate(async(num) => {
-                                pagina(num + 1, 2);
+                                pagina(num + 1, 4);
+                            }, num);
+                        }
+                        if (competencia.nombre === 'cobranza') {
+                            await page.evaluate(async(num) => {
+                                pagina(num + 1, 6);
+                            }, num);
+                        }
+                        if (competencia.nombre === 'familia') {
+                            await page.evaluate(async(num) => {
+                                pagina(num + 1, 7);
                             }, num);
                         }
                         await timeout(10000);
@@ -1952,13 +1994,34 @@ router.post("/obtener_estado", async(req, res) => {
                                 await page.waitForSelector(detalle);
                                 const causasPagina = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
                                 await page.waitForSelector(detalle + ':nth-child(' + causasPagina + ') > td > nav > ul');
+                                if (competencia.nombre === 'suprema') {
+                                    await page.evaluate(async(num) => {
+                                        pagina(num + 1, 1);
+                                    }, num);
+                                }
+                                if (competencia.nombre === 'apelaciones') {
+                                    await page.evaluate(async(num) => {
+                                        pagina(num + 1, 2);
+                                    }, num);
+                                }
                                 if (competencia.nombre === 'civil') {
                                     await page.evaluate(async(num) => {
                                         pagina(num + 1, 3);
                                     }, num);
-                                } else {
+                                }
+                                if (competencia.nombre === 'laboral') {
                                     await page.evaluate(async(num) => {
-                                        pagina(num + 1, 2);
+                                        pagina(num + 1, 4);
+                                    }, num);
+                                }
+                                if (competencia.nombre === 'cobranza') {
+                                    await page.evaluate(async(num) => {
+                                        pagina(num + 1, 6);
+                                    }, num);
+                                }
+                                if (competencia.nombre === 'familia') {
+                                    await page.evaluate(async(num) => {
+                                        pagina(num + 1, 7);
                                     }, num);
                                 }
                                 await timeout(10000);
