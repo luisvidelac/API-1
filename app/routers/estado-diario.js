@@ -48,7 +48,10 @@ router.get("/*", (req, res) => {
  *                  description: Obtener notificacion receptores
  *              competencia:
  *                  type: string
- *                  description: Competencia
+ *                  description: Competencia (si es por total no es requerida la competencia)
+ *              total:
+ *                  type: boolean
+ *                  description: Obtener solo totales de todas las competencias (no es requerido la competencia)
  *              fecha:
  *                  type: string
  *                  description: Fecha consulta dd/mm/yyy (opcional) fecha de consulta estado. Por defecto toma la fecha actual y resta 1 dia para la consulta. Si es Lunes consulta Viernes y Sabado
@@ -61,6 +64,7 @@ router.get("/*", (req, res) => {
  *              receptor: true
  *              competencia: civil
  *              fecha: "31/12/2022"
+ *              total: true
  *      Error:
  *          type: object
  *          properties:
