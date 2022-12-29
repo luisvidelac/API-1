@@ -124,13 +124,14 @@ http://localhost:3000/api-doc
 |/api/version | GET | Healthcheck | sin parametros |
 
 ## Ejemplos bodys
-
+```bash
 { 'competencia': 'suprema' }
 { 'competencia': 'apelaciones' }
 { 'competencia': 'civil', 'receptor': true } // receptor es opcional
 { 'competencia': 'laboral' }
 { 'competencia': 'cobranza', 'receptor': true } // receptor es opcional
 { 'competencia': 'familia' }
+```
 
 ## Ejemplos curls
 
