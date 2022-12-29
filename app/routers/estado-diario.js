@@ -5,6 +5,7 @@ const config = require("../config");
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const rimraf = require('rimraf');
 
 const { causaCivilesModel } = require("../models/causacivilesmodel");
 const { doctoCivilesModel } = require('../models/doctocivilesmodel');
@@ -381,7 +382,7 @@ router.post("/obtener_estado", async(req, res) => {
                 let files = await readFiles('./downloads/');
                 base64 = files[0].contents;
                 let filePath = files[0].filename;
-                fs.unlinkSync('./downloads/' + filePath);
+                rimraf.sync('./downloads');
             } catch (error) {
                 console.log(error);
             }
