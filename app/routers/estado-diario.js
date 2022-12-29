@@ -5,7 +5,6 @@ const config = require("../config");
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const rimraf = require('rimraf');
 
 const { causaCivilesModel } = require("../models/causacivilesmodel");
 const { doctoCivilesModel } = require('../models/doctocivilesmodel');
@@ -282,7 +281,7 @@ router.post("/obtener_estado", async(req, res) => {
         if (!total) {
             causas = await procesoPrincipal(competencia, causas, fechas);
         } else {
-            causas = await procesoTodasCausas(competencias, fechas);
+            causas = await procesoTodasCausas(competencias, fechas, peticion.usuario);
         }
 
         const end = parseHrtimeToSeconds(process.hrtime(start))
@@ -357,7 +356,7 @@ router.post("/obtener_estado", async(req, res) => {
         });
     }
 
-    async function procesoTodasCausas(competencias, fechas) {
+    async function procesoTodasCausas(competencias, fechas, usuario) {
         const causas = [];
         for await (const fecha of fechas) {
             const obj = {};
@@ -380,9 +379,14 @@ router.post("/obtener_estado", async(req, res) => {
             let base64 = "";
             try {
                 let files = await readFiles('./downloads/');
-                base64 = files[0].contents;
-                let filePath = files[0].filename;
-                rimraf.sync('./downloads');
+                for await (const file of files) {
+                    const newFecha = fecha.replace(new RegExp('/', 'g'), '_');
+                    if (file.filename.includes(usuario) && file.filename.includes(newFecha)) {
+                        base64 = file.contents;
+                        let filePath = file.filename;
+                        fs.unlinkSync('./downloads/' + filePath);
+                    }
+                }
             } catch (error) {
                 console.log(error);
             }
