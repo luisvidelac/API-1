@@ -17,4 +17,6 @@ const schema = mongoose.Schema({
     versionKey: false
 });
 
-module.exports = mongoose.model("DoctoLaborales", schema);
+const doctoLaboralesModel = mongoose.model("DoctoLaborales", schema);
+
+module.exports = { doctoLaboralesModel };

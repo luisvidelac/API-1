@@ -18,4 +18,6 @@ const schema = mongoose.Schema({
     versionKey: false
 });
 
-module.exports = mongoose.model("CausaApelaciones", schema);
+const causaApelacionesModel = mongoose.model("CausaApelaciones", schema);
+
+module.exports = { causaApelacionesModel };

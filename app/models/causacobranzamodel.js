@@ -19,4 +19,6 @@ const schema = mongoose.Schema({
     versionKey: false
 });
 
-module.exports = mongoose.model("CausaCobranza", schema);
+const causaCobranzaModel = mongoose.model("CausaCobranza", schema);
+
+module.exports = { causaCobranzaModel };

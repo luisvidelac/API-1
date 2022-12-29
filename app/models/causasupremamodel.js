@@ -16,4 +16,6 @@ const schema = mongoose.Schema({
     versionKey: false
 });
 
-module.exports = mongoose.model("CausaSuprema", schema);
+const causaSupremaModel = mongoose.model("CausaSuprema", schema);
+
+module.exports = { causaSupremaModel };

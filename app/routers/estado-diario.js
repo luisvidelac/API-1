@@ -3,18 +3,21 @@ const router = express.Router();
 const puppeteer = require('puppeteer-extra');
 const config = require("../config");
 const https = require('https');
-const causaCivilesModel = require("../models/causacivilesmodel");
-const doctoCivilesModel = require('../models/doctocivilesmodel');
-const causaApelacionesModel = require("../models/causaapelacionesmodel");
-const doctoApelacionesModel = require('../models/doctoapelacionesmodel');
-const causaFamiliaModel = require("../models/causafamiliamodel");
-const doctoFamiliaModel = require('../models/doctofamiliamodel');
-const causaCobranzaModel = require("../models/causacobranzamodel");
-const doctoCobranzaModel = require('../models/doctocobranzamodel');
-const causaLaboralesModel = require("../models/causalaboralesmodel");
-const doctoLaboralesModel = require('../models/doctolaboralesmodel');
-const causaSupremaModel = require("../models/causasupremamodel");
-const doctoSupremaModel = require('../models/doctosupremamodel');
+const fs = require('fs');
+const path = require('path');
+
+const { causaCivilesModel } = require("../models/causacivilesmodel");
+const { doctoCivilesModel } = require('../models/doctocivilesmodel');
+const { causaApelacionesModel } = require("../models/causaapelacionesmodel");
+const { doctoApelacionesModel } = require('../models/doctoapelacionesmodel');
+const { causaFamiliaModel } = require("../models/causafamiliamodel");
+const { doctoFamiliaModel } = require('../models/doctofamiliamodel');
+const { causaCobranzaModel } = require("../models/causacobranzamodel");
+const { doctoCobranzaModel } = require('../models/doctocobranzamodel');
+const { causaLaboralesModel } = require("../models/causalaboralesmodel");
+const { doctoLaboralesModel } = require('../models/doctolaboralesmodel');
+const { causaSupremaModel } = require("../models/causasupremamodel");
+const { doctoSupremaModel } = require('../models/doctosupremamodel');
 
 const hidden = require('puppeteer-extra-plugin-stealth');
 
@@ -187,14 +190,7 @@ router.post("/obtener_estado", async(req, res) => {
         return;
     }
 
-    if (!peticion.competencia || peticion.competencia.length == 0) {
-        res.json({
-            status: 400,
-            msg: "competencia es obligatoria ej: civil",
-            data: []
-        })
-        return;
-    }
+    const total = peticion.total ? true : false;
 
     const competencias = [];
     competencias.push({ nombre: 'suprema', tabCompetencia: '#nuevocolapsador > li:nth-child(1) > a', fechaCompetencia: '#fechaEstDiaSup', cargandoCompetencia: '#loadPreEstDiaSuprema', tituloDetalle: '#thTableEstDiaSuprema > tr', detalle: '#verDetalleEstDiaSuprema > tr', consultardetalle: '#btnConsultaEstDiaSuprema', modalDetalle: "#modalDetalleEstDiaSuprema" });
@@ -205,15 +201,30 @@ router.post("/obtener_estado", async(req, res) => {
     competencias.push({ nombre: 'cobranza', tabCompetencia: '#nuevocolapsador > li:nth-child(6) > a', fechaCompetencia: '#fechaEstDiaCob', cargandoCompetencia: '#loadPreEstDiaCobranza', tituloDetalle: '#thTableEstDiaCobranza > tr', detalle: '#verDetalleEstDiaCobranza > tr', consultardetalle: '#btnConsultaEstDiaCobranza', modalDetalle: "#modalDetalleEstDiaCobranza", modalReceptor: "#modalReceptorCobranza" });
     competencias.push({ nombre: 'familia', tabCompetencia: '#nuevocolapsador > li:nth-child(7) > a', fechaCompetencia: '#fechaEstDiaFam', cargandoCompetencia: '#loadPreEstDiaFamilia', tituloDetalle: '#thTableEstDiaFamilia > tr', detalle: '#verDetalleEstDiaFamilia > tr', consultardetalle: '#btnConsultaEstDiaFamilia', modalDetalle: "#modalDetalleEstDiaFamilia" });
 
-    const competencia = competencias.find(c => c.nombre === peticion.competencia);;
+    let competencia;
 
-    if (!competencia) {
-        res.json({
-            status: 400,
-            msg: "competencia " + peticion.competencia + " no existe",
-            data: []
-        })
-        return;
+    if (!total) {
+
+        if (!peticion.competencia || peticion.competencia.length == 0) {
+            res.json({
+                status: 400,
+                msg: "competencia es obligatoria ej: civil",
+                data: []
+            })
+            return;
+        }
+
+        competencia = competencias.find(c => c.nombre === peticion.competencia);;
+
+        if (!competencia) {
+            res.json({
+                status: 400,
+                msg: "competencia " + peticion.competencia + " no existe",
+                data: []
+            })
+            return;
+
+        }
 
     }
 
@@ -252,11 +263,135 @@ router.post("/obtener_estado", async(req, res) => {
     await page.setDefaultTimeout(config.timeout);
     await page.setDefaultNavigationTimeout(config.timeout);
 
-    await page.setViewport({ width: 2000, height: 4000 })
+    await page.setViewport({ width: 2000, height: 4000 });
+
+    const client = await page.target().createCDPSession();
+    await client.send('Page.setDownloadBehavior', {
+        behavior: 'allow',
+        downloadPath: path.resolve('./downloads'),
+    });
 
     try {
         let causas = [];
 
+        if (!total) {
+            causas = await procesoPrincipal(competencia, causas, fechas);
+        } else {
+            causas = await procesoTodasCausas(competencias, fechas);
+        }
+
+        const end = parseHrtimeToSeconds(process.hrtime(start))
+        console.info(`Tiempo de ejecución ${end} ms`);
+
+        res.json({
+            status: 200,
+            msg: `OK`,
+            data: causas
+        })
+
+    } catch (error) {
+        console.log("error en principal:", error.message ? error.message : error);
+        if (page) {
+            await page.screenshot({ path: './error.png' })
+            if (page.url() != config.targeturi) {
+                try {
+                    await page.evaluate(function() {
+                        salir();
+                    });
+                } catch (error) {}
+            }
+        }
+        if (browser) {
+            await browser.close();
+        }
+        res.status(500).json({
+            status: 500,
+            msg: `Error`,
+            data: error.message ? error.message : error
+        });
+    }
+
+    function getBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    function promiseAllP(items, block) {
+        var promises = [];
+        items.forEach(function(item, index) {
+            promises.push(function(item, i) {
+                return new Promise(function(resolve, reject) {
+                    return block.apply(this, [item, index, resolve, reject]);
+                });
+            }(item, index))
+        });
+        return Promise.all(promises);
+    }
+
+    function readFiles(dirname) {
+        return new Promise((resolve, reject) => {
+            fs.readdir(dirname, function(err, filenames) {
+                if (err) return reject(err);
+                promiseAllP(filenames,
+                        (filename, index, resolve, reject) => {
+                            const content = fs.readFileSync(path.resolve(dirname, filename), { encoding: 'base64' });
+                            return resolve({ filename: filename, contents: content });
+
+                        })
+                    .then(results => {
+                        return resolve(results);
+                    })
+                    .catch(error => {
+                        return reject(error);
+                    });
+            });
+        });
+    }
+
+    async function procesoTodasCausas(competencias, fechas) {
+        const causas = [];
+        for await (const fecha of fechas) {
+            const obj = {};
+            for await (const competencia of competencias) {
+                peticion.fecha = fecha;
+                console.log('iniciando consulta de competencia:', competencia.nombre, ' usuario:', peticion.usuario, ' fecha:', fecha);
+                await cargaPaginaPrincipal(competencia);
+                let detalle = competencia.detalle;
+                let rows = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
+                if (rows > 1) {
+                    let { cantCausas } = await cantidadPaginas(competencia.detalle);
+                    console.log('consulta de competencia:', competencia.nombre, ' usuario:', peticion.usuario, ' fecha:', fecha, ' cantidad:', cantCausas);
+                    obj[competencia.nombre] = cantCausas;
+                }
+            }
+            await page.waitForSelector('#BtnLoadExcelEstadoDiario');
+            await page.click('#BtnLoadExcelEstadoDiario');
+            await timeout(5000);
+
+            let base64 = "";
+            try {
+                let files = await readFiles('./downloads/');
+                base64 = files[0].contents;
+                let filePath = files[0].filename;
+                fs.unlinkSync('./downloads/' + filePath);
+            } catch (error) {
+                console.log(error);
+            }
+
+            causas.push({ fecha: fecha, competencias: obj, excelbase64: base64 });
+        }
+        await page.evaluate(function() {
+            salir();
+        });
+        await browser.close();
+        return causas;
+    }
+
+    async function procesoPrincipal(competencia, causas, fechas) {
         for await (const fecha of fechas) {
 
             peticion.fecha = fecha;
@@ -269,7 +404,6 @@ router.post("/obtener_estado", async(req, res) => {
             console.log('causas total rows:::', rows);
             let paginas = 0;
             if (rows > 1) {
-
 
                 let obj = await obtenerCausas(competencia, true, fecha);
                 causas = obj.causas;
@@ -404,42 +538,15 @@ router.post("/obtener_estado", async(req, res) => {
 
             }
 
-            await page.evaluate(function() {
-                salir();
-            });
-
         }
 
-        const end = parseHrtimeToSeconds(process.hrtime(start))
-        console.info(`Tiempo de ejecución ${end} ms`);
-
-        await browser.close();
-        res.json({
-            status: 200,
-            msg: `OK`,
-            data: causas
-        })
-
-    } catch (error) {
-        console.log("error en principal:", error.message ? error.message : error);
-        if (page) {
-            await page.screenshot({ path: './error.png' })
-            if (page.url() != config.targeturi) {
-                try {
-                    await page.evaluate(function() {
-                        salir();
-                    });
-                } catch (error) {}
-            }
-        }
-        if (browser) {
-            await browser.close();
-        }
-        res.status(500).json({
-            status: 500,
-            msg: `Error`,
-            data: error.message ? error.message : error
+        await page.evaluate(function() {
+            salir();
         });
+        await browser.close();
+
+        return causas;
+
     }
 
     async function obtenerCausas(competencia, insert, fecha) {
@@ -924,6 +1031,45 @@ router.post("/obtener_estado", async(req, res) => {
         }));
 
         return await doctoCobranzaModel.bulkWrite(doctoDelete);
+    }
+
+    async function insertUpdateDoctosSuprema(doctos, usuario) {
+        let ret = []
+        for await (const docto of doctos) {
+            let bus = await doctoSupremaModel.findOne({ "N° Ingreso": docto["N° Ingreso"], "Tipo Recurso": docto["Tipo Recurso"], "Caratulado": docto.Caratulado });
+            if (bus) {
+                docto.usuarios = Array.from(bus['usuarios']);
+            }
+
+            if (!docto.usuarios || docto.usuarios.length === 0) {
+                docto.usuarios = [];
+                docto.usuarios.push(usuario);
+                ret.push(docto);
+            } else {
+                if (!docto.usuarios.find(u => u === usuario)) {
+                    docto.usuarios.push(usuario);
+                    ret.push(docto);
+                } else {
+                    ret.push(docto);
+                }
+            }
+        }
+        const doctoUpdate = ret.map(docto => ({
+            updateOne: {
+                filter: {
+                    uuid: docto.uuid,
+                },
+                update: {
+                    $set: docto,
+                    $setOnInsert: {
+                        created_at: Date.now()
+                    }
+                },
+                upsert: true
+            }
+        }));
+
+        return await doctoSupremaModel.bulkWrite(doctoUpdate);
     }
 
     async function insertUpdateDoctosApelaciones(doctos, usuario) {
@@ -2839,14 +2985,19 @@ router.post("/obtener_estado", async(req, res) => {
                                     let base64encoding = await getBase64FromUrl(config.url + doc.url);
                                     let doctos = [];
                                     let obj = {};
-                                    if (competencia.nombre === 'apelaciones') {
+                                    if (competencia.nombre === 'suprema') {
                                         obj = { "N° Ingreso": detcausa["N° Ingreso"], "Ubicación": detcausa["Ubicación"], "Corte": detcausa.Corte, "Caratulado": detcausa.Caratulado };
+                                    } else if (competencia.nombre === 'apelaciones') {
+                                        obj = { "N° Ingreso": detcausa["N° Ingreso"], "Tipo Recurso": detcausa["Tipo Recurso"], "Caratulado": detcausa.Caratulado };
                                     } else if (competencia.nombre === 'familia' || competencia.nombre === 'laboral') {
                                         obj = { "Rit": detcausa["Rit"], "Ruc": detcausa["Ruc"], "Tribunal": detcausa["Tribunal"], "Caratulado": detcausa["Caratulado"] };
                                     }
                                     let docto = { uuid: uuid, url: config.url + doc.url, contentype: base64encoding.split('|')[0], base64: base64encoding.split('|')[1], usuario: usuario, ...obj };
                                     docto.updated_at = Date.now();
                                     doctos.push(docto);
+                                    if (competencia.nombre === 'suprema') {
+                                        await insertUpdateDoctosSuprema(doctos, usuario);
+                                    }
                                     if (competencia.nombre === 'apelaciones') {
                                         await insertUpdateDoctosApelaciones(doctos, usuario);
                                     }

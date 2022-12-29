@@ -1,18 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const config = require("../config");
-const causaCivilesModel = require("../models/causacivilesmodel");
-const doctoCivilesModel = require('../models/doctocivilesmodel');
-const causaApelacionesModel = require("../models/causaapelacionesmodel");
-const doctoApelacionesModel = require('../models/doctoapelacionesmodel');
-const causaFamiliaModel = require("../models/causafamiliamodel");
-const doctoFamiliaModel = require('../models/doctofamiliamodel');
-const causaCobranzaModel = require("../models/causacobranzamodel");
-const doctoCobranzaModel = require('../models/doctocobranzamodel');
-const causaLaboralesModel = require("../models/causalaboralesmodel");
-const doctoLaboralesModel = require('../models/doctolaboralesmodel');
-const causaSupremaModel = require("../models/causasupremamodel");
-const doctoSupremaModel = require('../models/doctosupremamodel');
+const { causaCivilesModel } = require("../models/causacivilesmodel");
+const { doctoCivilesModel } = require('../models/doctocivilesmodel');
+const { causaApelacionesModel } = require("../models/causaapelacionesmodel");
+const { doctoApelacionesModel } = require('../models/doctoapelacionesmodel');
+const { causaFamiliaModel } = require("../models/causafamiliamodel");
+const { doctoFamiliaModel } = require('../models/doctofamiliamodel');
+const { causaCobranzaModel } = require("../models/causacobranzamodel");
+const { doctoCobranzaModel } = require('../models/doctocobranzamodel');
+const { causaLaboralesModel } = require("../models/causalaboralesmodel");
+const { doctoLaboralesModel } = require('../models/doctolaboralesmodel');
+const { causaSupremaModel } = require("../models/causasupremamodel");
+const { doctoSupremaModel } = require('../models/doctosupremamodel');
 
 /**
  * @swagger

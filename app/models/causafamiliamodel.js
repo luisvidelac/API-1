@@ -18,4 +18,6 @@ const schema = mongoose.Schema({
     versionKey: false
 });
 
-module.exports = mongoose.model("CausaFamilia", schema);
+const causaFamiliaModel = mongoose.model("CausaFamilia", schema);
+
+module.exports = { causaFamiliaModel };

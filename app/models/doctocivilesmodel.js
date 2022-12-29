@@ -16,4 +16,6 @@ const schema = mongoose.Schema({
     versionKey: false
 });
 
-module.exports = mongoose.model("DoctoCiviles", schema);
+const doctoCivilesModel = mongoose.model("DoctoCiviles", schema);
+
+module.exports = { doctoCivilesModel };

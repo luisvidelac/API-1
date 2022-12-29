@@ -7,7 +7,12 @@ require('dotenv').config();
 
 const estadoDiario = require("./app/routers/estado-diario");
 const consulta = require("./app/routers/consulta-diario");
-const { application } = require("express");
+
+const log = console.log;
+
+console.log = function() {
+    log.apply(console, [new Date(), ...arguments]);
+};
 
 const swaggerUI = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
