@@ -125,6 +125,7 @@ http://localhost:3000/api-doc
 
 ## Ejemplos bodys
 ```bash
+{ 'total': true } // solo totales de todas las competencias no procesa nada, competencia no es obligatorio
 { 'competencia': 'suprema' }
 { 'competencia': 'apelaciones' }
 { 'competencia': 'civil', 'receptor': true } // receptor es opcional
