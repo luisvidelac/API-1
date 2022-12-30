@@ -262,7 +262,8 @@ router.post("/obtener_estado", async(req, res) => {
         ...config.launchConf
     });
 
-    const page = await browser.newPage();
+    //const page = await browser.newPage();
+    const [page] = await browser.pages();
     await page.setCacheEnabled(false);
     await page.setDefaultTimeout(config.timeout);
     await page.setDefaultNavigationTimeout(config.timeout);
@@ -299,21 +300,24 @@ router.post("/obtener_estado", async(req, res) => {
             await page.screenshot({ path: './error.png' })
             if (page.url() != config.targeturi) {
                 try {
-                    await page.evaluate(function() {
-                        salir();
-                    });
-                } catch (error) {}
+                    await page.evaluate(`salir();`);
+                } catch (error) {
+
+                }
             }
-        }
-        if (browser) {
-            await browser.close();
         }
         res.status(500).json({
             status: 500,
             msg: `Error`,
             data: error.message ? error.message : error
         });
+    } finally {
+        if (browser) {
+            await browser.close();
+        }
     }
+
+
 
     function getBase64(file) {
         return new Promise((resolve, reject) => {
@@ -372,19 +376,31 @@ router.post("/obtener_estado", async(req, res) => {
                     obj[competencia.nombre] = cantCausas;
                 }
             }
+            await cargaPaginaPrincipal(competencias[0]);
             await page.waitForSelector('#BtnLoadExcelEstadoDiario');
             await page.click('#BtnLoadExcelEstadoDiario');
-            await timeout(5000);
 
             let base64 = "";
             try {
-                let files = await readFiles('./downloads/');
-                for await (const file of files) {
-                    const newFecha = fecha.replace(new RegExp('/', 'g'), '_');
-                    if (file.filename.includes(usuario) && file.filename.includes(newFecha)) {
-                        base64 = file.contents;
-                        let filePath = file.filename;
-                        fs.unlinkSync('./downloads/' + filePath);
+                let reintento = 0;
+                while (true) {
+                    let files = await readFiles('./downloads/');
+                    if (files.length > 0) {
+                        for await (const file of files) {
+                            const newFecha = fecha.replace(new RegExp('/', 'g'), '_');
+                            if (file.filename.includes(usuario) && file.filename.includes(newFecha)) {
+                                base64 = file.contents;
+                                let filePath = file.filename;
+                                fs.unlinkSync('./downloads/' + filePath);
+                            }
+                        }
+                        break;
+                    } else {
+                        await timeout(1000);
+                        reintento++;
+                        if (reintento > 60) {
+                            break;
+                        }
                     }
                 }
             } catch (error) {
@@ -393,10 +409,11 @@ router.post("/obtener_estado", async(req, res) => {
 
             causas.push({ fecha: fecha, competencias: obj, excelbase64: base64 });
         }
-        await page.evaluate(function() {
-            salir();
-        });
-        await browser.close();
+        try {
+            await page.evaluate(`salir();`);
+        } catch (error) {
+
+        }
         return causas;
     }
 
@@ -462,7 +479,7 @@ router.post("/obtener_estado", async(req, res) => {
                 }
 
                 if (competencia.nombre === "civil") {
-                    let causasfilter = await getCausasBD(causas, receptor);
+                    let causasfilter = await getCausasCivilesBD(causas, receptor);
                     const causasdiff = [];
                     for await (const causa of causas) {
                         let bus = causasfilter.filter(c => c.Rol === causa.Rol && c.Fecha === causa.Fecha && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
@@ -549,10 +566,11 @@ router.post("/obtener_estado", async(req, res) => {
 
         }
 
-        await page.evaluate(function() {
-            salir();
-        });
-        await browser.close();
+        try {
+            await page.evaluate(`salir();`);
+        } catch (error) {
+
+        }
 
         return causas;
 
@@ -697,7 +715,7 @@ router.post("/obtener_estado", async(req, res) => {
 
     async function insertUpdateCausasCiviles(causas, usuario) {
         try {
-            let ret = []
+            let ret = [];
             for await (const causa of causas) {
 
                 let bus = await causaCivilesModel.findOne({ Rol: causa.Rol, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
@@ -735,12 +753,13 @@ router.post("/obtener_estado", async(req, res) => {
             return await causaCivilesModel.bulkWrite(causaUpdate);
         } catch (error) {
             console.log("error en insertUpdateCausasCiviles:", error);
+            throw error;
         }
     }
 
     async function insertUpdateCausasCobranza(causas, usuario) {
         try {
-            let ret = []
+            let ret = [];
             for await (const causa of causas) {
 
                 let bus = await causaCobranzaModel.findOne({ Rit: causa.Rit, Ruc: causa.Ruc, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
@@ -779,12 +798,13 @@ router.post("/obtener_estado", async(req, res) => {
             return await causaCobranzaModel.bulkWrite(causaUpdate);
         } catch (error) {
             console.log("error en insertUpdateCausasCobranza:", error);
+            throw error;
         }
     }
 
     async function insertUpdateCausasSuprema(causas, usuario) {
         try {
-            let ret = []
+            let ret = [];
             for await (const causa of causas) {
                 let bus = await causaSupremaModel.findOne({ "N° Ingreso": causa["N° Ingreso"], "Tipo Recurso": causa["Tipo Recurso"], Caratulado: causa.Caratulado });
                 if (bus) {
@@ -821,13 +841,14 @@ router.post("/obtener_estado", async(req, res) => {
             return await causaSupremaModel.bulkWrite(causaUpdate);
         } catch (error) {
             console.log("error en insertUpdateCausasSuprema:", error);
+            throw error;
         }
     }
 
 
     async function insertUpdateCausasApelaciones(causas, usuario) {
         try {
-            let ret = []
+            let ret = [];
             for await (const causa of causas) {
                 let bus = await causaApelacionesModel.findOne({ "N° Ingreso": causa["N° Ingreso"], "Ubicación": causa["Ubicación"], Caratulado: causa.Caratulado, Corte: causa.Corte });
                 if (bus) {
@@ -865,14 +886,15 @@ router.post("/obtener_estado", async(req, res) => {
             return await causaApelacionesModel.bulkWrite(causaUpdate);
         } catch (error) {
             console.log("error en insertUpdateCausasApelaciones:", error);
+            throw error;
         }
     }
 
     async function insertUpdateCausasFamilia(causas, usuario) {
         try {
-            let ret = []
+            let ret = [];
             for await (const causa of causas) {
-                let bus = await causaApelacionesModel.findOne({ "Rit": causa["Rit"], "Ruc": causa["Ruc"], Tribunal: causa.Tribunal, Caratulado: causa.Caratulado });
+                let bus = await causaFamiliaModel.findOne({ "Rit": causa["Rit"], "Ruc": causa["Ruc"], Tribunal: causa.Tribunal, Caratulado: causa.Caratulado });
                 if (bus) {
                     causa.usuarios = Array.from(bus['usuarios']);
                 }
@@ -908,12 +930,13 @@ router.post("/obtener_estado", async(req, res) => {
             return await causaFamiliaModel.bulkWrite(causaUpdate);
         } catch (error) {
             console.log("error en insertUpdateCausasFamilia:", error);
+            throw error;
         }
     }
 
     async function insertUpdateCausasLaborales(causas, usuario) {
+        let ret = [];
         try {
-            let ret = []
             for await (const causa of causas) {
                 let bus = await causaLaboralesModel.findOne({ "Rit": causa["Rit"], "Ruc": causa["Ruc"], Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
                 if (bus) {
@@ -951,329 +974,390 @@ router.post("/obtener_estado", async(req, res) => {
             return await causaLaboralesModel.bulkWrite(causaUpdate);
         } catch (error) {
             console.log("error en insertUpdateCausasLaborales:", error);
+            throw error;
         }
     }
 
     async function deleteDoctosSuprema(doctos) {
-        const doctoDelete = doctos.map(docto => ({
-            deleteMany: {
-                filter: {
-                    "N° Ingreso": docto["N° Ingreso"],
-                    "Tipo Recurso": docto["Tipo Recurso"],
-                    "Caratulado": docto.Caratulado
+        try {
+            const doctoDelete = doctos.map(docto => ({
+                deleteMany: {
+                    filter: {
+                        "N° Ingreso": docto["N° Ingreso"],
+                        "Tipo Recurso": docto["Tipo Recurso"],
+                        "Caratulado": docto.Caratulado
+                    }
                 }
-            }
-        }));
+            }));
 
-        return await doctoSupremaModel.bulkWrite(doctoDelete);
+            return await doctoSupremaModel.bulkWrite(doctoDelete);
+        } catch (error) {
+            console.log("error en deleteDoctosSuprema:", error);
+            throw error;
+        }
     }
 
     async function deleteDoctosApelaciones(doctos) {
-        const doctoDelete = doctos.map(docto => ({
-            deleteMany: {
-                filter: {
-                    "N° Ingreso": docto["N° Ingreso"],
-                    "Ubicación": docto["Ubicación"],
-                    "Corte": docto.Corte,
-                    "Caratulado": docto.Caratulado
+        try {
+            const doctoDelete = doctos.map(docto => ({
+                deleteMany: {
+                    filter: {
+                        "N° Ingreso": docto["N° Ingreso"],
+                        "Ubicación": docto["Ubicación"],
+                        "Corte": docto.Corte,
+                        "Caratulado": docto.Caratulado
+                    }
                 }
-            }
-        }));
+            }));
 
-        return await doctoApelacionesModel.bulkWrite(doctoDelete);
+            return await doctoApelacionesModel.bulkWrite(doctoDelete);
+        } catch (error) {
+            console.log("error en deleteDoctosApelaciones:", error);
+            throw error;
+        }
     }
 
     async function deleteDoctosFamilia(doctos) {
-        const doctoDelete = doctos.map(docto => ({
-            deleteMany: {
-                filter: {
-                    "Rit": docto["Rit"],
-                    "Ruc": docto["Ruc"],
-                    "Tribunal": docto.Tribunal,
-                    "Caratulado": docto.Caratulado
+        try {
+            const doctoDelete = doctos.map(docto => ({
+                deleteMany: {
+                    filter: {
+                        "Rit": docto["Rit"],
+                        "Ruc": docto["Ruc"],
+                        "Tribunal": docto.Tribunal,
+                        "Caratulado": docto.Caratulado
+                    }
                 }
-            }
-        }));
+            }));
 
-        return await doctoFamiliaModel.bulkWrite(doctoDelete);
+            return await doctoFamiliaModel.bulkWrite(doctoDelete);
+        } catch (error) {
+            console.log("error en deleteDoctosFamilia:", error);
+            throw error;
+        }
     }
 
     async function deleteDoctosCiviles(doctos) {
-        const doctoDelete = doctos.map(docto => ({
-            deleteMany: {
-                filter: {
-                    Rol: docto.Rol,
-                    Caratulado: docto.Caratulado,
-                    Tribunal: docto.Tribunal
+        try {
+            const doctoDelete = doctos.map(docto => ({
+                deleteMany: {
+                    filter: {
+                        Rol: docto.Rol,
+                        Caratulado: docto.Caratulado,
+                        Tribunal: docto.Tribunal
+                    }
                 }
-            }
-        }));
+            }));
 
-        return await doctoCivilesModel.bulkWrite(doctoDelete);
+            return await doctoCivilesModel.bulkWrite(doctoDelete);
+        } catch (error) {
+            console.log("error en deleteDoctosCiviles:", error);
+            throw error;
+        }
     }
 
     async function deleteDoctosLaborales(doctos) {
-        const doctoDelete = doctos.map(docto => ({
-            deleteMany: {
-                filter: {
-                    Rit: docto.Rit,
-                    Ruc: docto.Ruc,
-                    Caratulado: docto.Caratulado,
-                    Tribunal: docto.Tribunal
+        try {
+            const doctoDelete = doctos.map(docto => ({
+                deleteMany: {
+                    filter: {
+                        Rit: docto.Rit,
+                        Ruc: docto.Ruc,
+                        Caratulado: docto.Caratulado,
+                        Tribunal: docto.Tribunal
+                    }
                 }
-            }
-        }));
+            }));
 
-        return await doctoLaboralesModel.bulkWrite(doctoDelete);
+            return await doctoLaboralesModel.bulkWrite(doctoDelete);
+        } catch (error) {
+            console.log("error en deleteDoctosLaborales:", error);
+            throw error;
+        }
     }
 
     async function deleteDoctosCobranza(doctos) {
-        const doctoDelete = doctos.map(docto => ({
-            deleteMany: {
-                filter: {
-                    Rit: docto.Rit,
-                    Ruc: docto.Ruc,
-                    Caratulado: docto.Caratulado,
-                    Tribunal: docto.Tribunal
+        try {
+            const doctoDelete = doctos.map(docto => ({
+                deleteMany: {
+                    filter: {
+                        Rit: docto.Rit,
+                        Ruc: docto.Ruc,
+                        Caratulado: docto.Caratulado,
+                        Tribunal: docto.Tribunal
+                    }
                 }
-            }
-        }));
+            }));
 
-        return await doctoCobranzaModel.bulkWrite(doctoDelete);
+            return await doctoCobranzaModel.bulkWrite(doctoDelete);
+        } catch (error) {
+            console.log("error en deleteDoctosCobranza:", error);
+            throw error;
+        }
     }
 
     async function insertUpdateDoctosSuprema(doctos, usuario) {
-        let ret = []
-        for await (const docto of doctos) {
-            let bus = await doctoSupremaModel.findOne({ "N° Ingreso": docto["N° Ingreso"], "Tipo Recurso": docto["Tipo Recurso"], "Caratulado": docto.Caratulado });
-            if (bus) {
-                docto.usuarios = Array.from(bus['usuarios']);
-            }
+        try {
+            let ret = [];
+            for await (const docto of doctos) {
+                let bus = await doctoSupremaModel.findOne({ "N° Ingreso": docto["N° Ingreso"], "Tipo Recurso": docto["Tipo Recurso"], "Caratulado": docto.Caratulado });
+                if (bus) {
+                    docto.usuarios = Array.from(bus['usuarios']);
+                }
 
-            if (!docto.usuarios || docto.usuarios.length === 0) {
-                docto.usuarios = [];
-                docto.usuarios.push(usuario);
-                ret.push(docto);
-            } else {
-                if (!docto.usuarios.find(u => u === usuario)) {
+                if (!docto.usuarios || docto.usuarios.length === 0) {
+                    docto.usuarios = [];
                     docto.usuarios.push(usuario);
                     ret.push(docto);
                 } else {
-                    ret.push(docto);
+                    if (!docto.usuarios.find(u => u === usuario)) {
+                        docto.usuarios.push(usuario);
+                        ret.push(docto);
+                    } else {
+                        ret.push(docto);
+                    }
                 }
             }
-        }
-        const doctoUpdate = ret.map(docto => ({
-            updateOne: {
-                filter: {
-                    uuid: docto.uuid,
-                },
-                update: {
-                    $set: docto,
-                    $setOnInsert: {
-                        created_at: Date.now()
-                    }
-                },
-                upsert: true
-            }
-        }));
+            const doctoUpdate = ret.map(docto => ({
+                updateOne: {
+                    filter: {
+                        uuid: docto.uuid,
+                    },
+                    update: {
+                        $set: docto,
+                        $setOnInsert: {
+                            created_at: Date.now()
+                        }
+                    },
+                    upsert: true
+                }
+            }));
 
-        return await doctoSupremaModel.bulkWrite(doctoUpdate);
+            return await doctoSupremaModel.bulkWrite(doctoUpdate);
+        } catch (error) {
+            console.log("error en insertUpdateDoctosSuprema:", error);
+            throw error;
+        }
     }
 
     async function insertUpdateDoctosApelaciones(doctos, usuario) {
-        let ret = []
-        for await (const docto of doctos) {
-            let bus = await doctoApelacionesModel.findOne({ "N° Ingreso": docto["N° Ingreso"], "Ubicación": docto["Ubicación"], "Corte": docto.Corte, "Caratulado": docto.Caratulado });
-            if (bus) {
-                docto.usuarios = Array.from(bus['usuarios']);
-            }
+        try {
+            let ret = [];
+            for await (const docto of doctos) {
+                let bus = await doctoApelacionesModel.findOne({ "N° Ingreso": docto["N° Ingreso"], "Ubicación": docto["Ubicación"], "Corte": docto.Corte, "Caratulado": docto.Caratulado });
+                if (bus) {
+                    docto.usuarios = Array.from(bus['usuarios']);
+                }
 
-            if (!docto.usuarios || docto.usuarios.length === 0) {
-                docto.usuarios = [];
-                docto.usuarios.push(usuario);
-                ret.push(docto);
-            } else {
-                if (!docto.usuarios.find(u => u === usuario)) {
+                if (!docto.usuarios || docto.usuarios.length === 0) {
+                    docto.usuarios = [];
                     docto.usuarios.push(usuario);
                     ret.push(docto);
                 } else {
-                    ret.push(docto);
+                    if (!docto.usuarios.find(u => u === usuario)) {
+                        docto.usuarios.push(usuario);
+                        ret.push(docto);
+                    } else {
+                        ret.push(docto);
+                    }
                 }
             }
-        }
-        const doctoUpdate = ret.map(docto => ({
-            updateOne: {
-                filter: {
-                    uuid: docto.uuid,
-                },
-                update: {
-                    $set: docto,
-                    $setOnInsert: {
-                        created_at: Date.now()
-                    }
-                },
-                upsert: true
-            }
-        }));
+            const doctoUpdate = ret.map(docto => ({
+                updateOne: {
+                    filter: {
+                        uuid: docto.uuid,
+                    },
+                    update: {
+                        $set: docto,
+                        $setOnInsert: {
+                            created_at: Date.now()
+                        }
+                    },
+                    upsert: true
+                }
+            }));
 
-        return await doctoApelacionesModel.bulkWrite(doctoUpdate);
+            return await doctoApelacionesModel.bulkWrite(doctoUpdate);
+        } catch (error) {
+            console.log("error en insertUpdateDoctosApelaciones:", error);
+            throw error;
+        }
     }
 
     async function insertUpdateDoctosCiviles(doctos, usuario) {
-        let ret = []
-        for await (const docto of doctos) {
-            let bus = await doctoCivilesModel.findOne({ Rol: docto.Rol, Caratulado: docto.Caratulado, Tribunal: docto.Tribunal });
-            if (bus) {
-                docto.usuarios = Array.from(bus['usuarios']);
-            }
+        try {
+            let ret = [];
+            for await (const docto of doctos) {
+                let bus = await doctoCivilesModel.findOne({ Rol: docto.Rol, Caratulado: docto.Caratulado, Tribunal: docto.Tribunal });
+                if (bus) {
+                    docto.usuarios = Array.from(bus['usuarios']);
+                }
 
-            if (!docto.usuarios || docto.usuarios.length === 0) {
-                docto.usuarios = [];
-                docto.usuarios.push(usuario);
-                ret.push(docto);
-            } else {
-                if (!docto.usuarios.find(u => u === usuario)) {
+                if (!docto.usuarios || docto.usuarios.length === 0) {
+                    docto.usuarios = [];
                     docto.usuarios.push(usuario);
                     ret.push(docto);
                 } else {
-                    ret.push(docto);
+                    if (!docto.usuarios.find(u => u === usuario)) {
+                        docto.usuarios.push(usuario);
+                        ret.push(docto);
+                    } else {
+                        ret.push(docto);
+                    }
                 }
             }
-        }
-        const doctoUpdate = ret.map(docto => ({
-            updateOne: {
-                filter: {
-                    uuid: docto.uuid,
-                },
-                update: {
-                    $set: docto,
-                    $setOnInsert: {
-                        created_at: Date.now()
-                    }
-                },
-                upsert: true
-            }
-        }));
+            const doctoUpdate = ret.map(docto => ({
+                updateOne: {
+                    filter: {
+                        uuid: docto.uuid,
+                    },
+                    update: {
+                        $set: docto,
+                        $setOnInsert: {
+                            created_at: Date.now()
+                        }
+                    },
+                    upsert: true
+                }
+            }));
 
-        return await doctoCivilesModel.bulkWrite(doctoUpdate);
+            return await doctoCivilesModel.bulkWrite(doctoUpdate);
+        } catch (error) {
+            console.log("error en insertUpdateDoctosCiviles:", error);
+            throw error;
+        }
     }
 
     async function insertUpdateDoctosCobranza(doctos, usuario) {
-        let ret = []
-        for await (const docto of doctos) {
-            let bus = await doctoCivilesModel.findOne({ Rit: docto.Rit, Ruc: docto.Ruc, Caratulado: docto.Caratulado, Tribunal: docto.Tribunal });
-            if (bus) {
-                docto.usuarios = Array.from(bus['usuarios']);
-            }
+        try {
+            let ret = [];
+            for await (const docto of doctos) {
+                let bus = await doctoCobranzaModel.findOne({ Rit: docto.Rit, Ruc: docto.Ruc, Caratulado: docto.Caratulado, Tribunal: docto.Tribunal });
+                if (bus) {
+                    docto.usuarios = Array.from(bus['usuarios']);
+                }
 
-            if (!docto.usuarios || docto.usuarios.length === 0) {
-                docto.usuarios = [];
-                docto.usuarios.push(usuario);
-                ret.push(docto);
-            } else {
-                if (!docto.usuarios.find(u => u === usuario)) {
+                if (!docto.usuarios || docto.usuarios.length === 0) {
+                    docto.usuarios = [];
                     docto.usuarios.push(usuario);
                     ret.push(docto);
                 } else {
-                    ret.push(docto);
+                    if (!docto.usuarios.find(u => u === usuario)) {
+                        docto.usuarios.push(usuario);
+                        ret.push(docto);
+                    } else {
+                        ret.push(docto);
+                    }
                 }
             }
-        }
-        const doctoUpdate = ret.map(docto => ({
-            updateOne: {
-                filter: {
-                    uuid: docto.uuid,
-                },
-                update: {
-                    $set: docto,
-                    $setOnInsert: {
-                        created_at: Date.now()
-                    }
-                },
-                upsert: true
-            }
-        }));
+            const doctoUpdate = ret.map(docto => ({
+                updateOne: {
+                    filter: {
+                        uuid: docto.uuid,
+                    },
+                    update: {
+                        $set: docto,
+                        $setOnInsert: {
+                            created_at: Date.now()
+                        }
+                    },
+                    upsert: true
+                }
+            }));
 
-        return await doctoCobranzaModel.bulkWrite(doctoUpdate);
+            return await doctoCobranzaModel.bulkWrite(doctoUpdate);
+        } catch (error) {
+            console.log("error en insertUpdateDoctosCobranza:", error);
+            throw error;
+        }
     }
 
     async function insertUpdateDoctosLaborales(doctos, usuario) {
-        let ret = []
-        for await (const docto of doctos) {
-            let bus = await doctoCivilesModel.findOne({ Rit: docto.Rit, Ruc: docto.Ruc, Caratulado: docto.Caratulado, Tribunal: docto.Tribunal });
-            if (bus) {
-                docto.usuarios = Array.from(bus['usuarios']);
-            }
+        try {
+            let ret = [];
+            for await (const docto of doctos) {
+                let bus = await doctoLaboralesModel.findOne({ Rit: docto.Rit, Ruc: docto.Ruc, Caratulado: docto.Caratulado, Tribunal: docto.Tribunal });
+                if (bus) {
+                    docto.usuarios = Array.from(bus['usuarios']);
+                }
 
-            if (!docto.usuarios || docto.usuarios.length === 0) {
-                docto.usuarios = [];
-                docto.usuarios.push(usuario);
-                ret.push(docto);
-            } else {
-                if (!docto.usuarios.find(u => u === usuario)) {
+                if (!docto.usuarios || docto.usuarios.length === 0) {
+                    docto.usuarios = [];
                     docto.usuarios.push(usuario);
                     ret.push(docto);
                 } else {
-                    ret.push(docto);
+                    if (!docto.usuarios.find(u => u === usuario)) {
+                        docto.usuarios.push(usuario);
+                        ret.push(docto);
+                    } else {
+                        ret.push(docto);
+                    }
                 }
             }
-        }
-        const doctoUpdate = ret.map(docto => ({
-            updateOne: {
-                filter: {
-                    uuid: docto.uuid,
-                },
-                update: {
-                    $set: docto,
-                    $setOnInsert: {
-                        created_at: Date.now()
-                    }
-                },
-                upsert: true
-            }
-        }));
+            const doctoUpdate = ret.map(docto => ({
+                updateOne: {
+                    filter: {
+                        uuid: docto.uuid,
+                    },
+                    update: {
+                        $set: docto,
+                        $setOnInsert: {
+                            created_at: Date.now()
+                        }
+                    },
+                    upsert: true
+                }
+            }));
 
-        return await doctoLaboralesModel.bulkWrite(doctoUpdate);
+            return await doctoLaboralesModel.bulkWrite(doctoUpdate);
+        } catch (error) {
+            console.log("error en insertUpdateDoctosLaborales:", error);
+            throw error;
+        }
     }
 
     async function insertUpdateDoctosFamilia(doctos, usuario) {
-        let ret = []
-        for await (const docto of doctos) {
-            let bus = await doctoApelacionesModel.findOne({ "Rit": docto["Rit"], "Ruc": docto["Ruc"], "Tribunal": docto.Tribunal, "Caratulado": docto.Caratulado });
-            if (bus) {
-                docto.usuarios = Array.from(bus['usuarios']);
-            }
+        try {
+            let ret = [];
+            for await (const docto of doctos) {
+                let bus = await doctoFamiliaModel.findOne({ "Rit": docto["Rit"], "Ruc": docto["Ruc"], "Tribunal": docto.Tribunal, "Caratulado": docto.Caratulado });
+                if (bus) {
+                    docto.usuarios = Array.from(bus['usuarios']);
+                }
 
-            if (!docto.usuarios || docto.usuarios.length === 0) {
-                docto.usuarios = [];
-                docto.usuarios.push(usuario);
-                ret.push(docto);
-            } else {
-                if (!docto.usuarios.find(u => u === usuario)) {
+                if (!docto.usuarios || docto.usuarios.length === 0) {
+                    docto.usuarios = [];
                     docto.usuarios.push(usuario);
                     ret.push(docto);
                 } else {
-                    ret.push(docto);
+                    if (!docto.usuarios.find(u => u === usuario)) {
+                        docto.usuarios.push(usuario);
+                        ret.push(docto);
+                    } else {
+                        ret.push(docto);
+                    }
                 }
             }
-        }
-        const doctoUpdate = ret.map(docto => ({
-            updateOne: {
-                filter: {
-                    uuid: docto.uuid,
-                },
-                update: {
-                    $set: docto,
-                    $setOnInsert: {
-                        created_at: Date.now()
-                    }
-                },
-                upsert: true
-            }
-        }));
+            const doctoUpdate = ret.map(docto => ({
+                updateOne: {
+                    filter: {
+                        uuid: docto.uuid,
+                    },
+                    update: {
+                        $set: docto,
+                        $setOnInsert: {
+                            created_at: Date.now()
+                        }
+                    },
+                    upsert: true
+                }
+            }));
 
-        return await doctoFamiliaModel.bulkWrite(doctoUpdate);
+            return await doctoFamiliaModel.bulkWrite(doctoUpdate);
+        } catch (error) {
+            console.log("error en insertUpdateDoctosFamilia:", error);
+            throw error;
+        }
     }
 
     async function getCausasSupremaBD(causaspjud) {
@@ -1330,7 +1414,7 @@ router.post("/obtener_estado", async(req, res) => {
         }
     }
 
-    async function getCausasBD(causaspjud) {
+    async function getCausasCivilesBD(causaspjud) {
         const retorno = [];
         try {
 
@@ -1361,7 +1445,7 @@ router.post("/obtener_estado", async(req, res) => {
             }
             return retorno;
         } catch (error) {
-            console.log("error getCausasBD:", error);
+            console.log("error getCausasCivilesBD:", error);
             throw error;
         }
     }
@@ -1524,7 +1608,7 @@ router.post("/obtener_estado", async(req, res) => {
                     await page.waitForSelector('#btnSegundaClaveIngresar')
                     await page.click('#btnSegundaClaveIngresar')
                     page.on('dialog', async dialog => {
-                        console.log(dialog.message()); 
+                        console.log(dialog.message());
                         await dialog.accept();
                         reject(dialog.message());
                     })

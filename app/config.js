@@ -17,7 +17,9 @@ const config = {
         headless: false,
         args: [
             '--no-sandbox',
-            '--disable-gpu'
+            '--disable-gpu',
+            '--disable-site-isolation-trials',
+            '--disable-dev-shm-usage'
         ],
 
     }
