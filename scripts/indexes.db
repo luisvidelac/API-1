@@ -1,3 +1,5 @@
+use pjud;
+
 /* causaciviles */
 
 db.getCollection('causaciviles').createIndex(
