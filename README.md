@@ -64,48 +64,7 @@ sudo systemctl disable mongod // configura el servicio abajo al reiniciar la maq
 
 ## Create Index MongoDB
 
-```bash
-db.getCollection('causas').createIndex(
-  {
-    "Rol" : 1,
-    "Caratulado" : 1,
-    "Tribunal" : 1
-},
-   {
-     name: "find_causas"
-   }
-);
-
-db.getCollection('causas').createIndex(
-  {
-    "updated_at" : 1
-},
-   {
-     name: "updated_at_causas"
-   }
-);
-
-db.getCollection('doctos').createIndex(
-  {
-    "Rol" : 1,
-    "Caratulado" : 1,
-    "Tribunal" : 1,
-    "usuarios" : 1
-},
-   {
-     name: "find_doctos"
-   }
-);
-
-db.getCollection('doctos').createIndex(
-  {
-    "uuid" : 1
-},
-   {
-     name: "uuid_doctos"
-   }
-);
-```
+[Create Index](../blob/main/scripts/indexes.db)
 
 ## Resumen APIs
 
