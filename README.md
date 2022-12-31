@@ -62,9 +62,11 @@ sudo systemctl enable mongod // configura el servicio arriba al reiniciar la maq
 sudo systemctl disable mongod // configura el servicio abajo al reiniciar la maquina
 ```
 
-## Create Index MongoDB
+## Scripts MongoDB
 
 [Create Index](../main/scripts/indexes.db)
+
+[Drop Collections](../main/scripts/remove.db)
 
 ## Resumen APIs
 
