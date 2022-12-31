@@ -1541,16 +1541,16 @@ router.post("/obtener_estado", async(req, res) => {
     }
 
     async function validateLogin(competencia) {
-        if (page.url() === config.targeturi) {
-            try {
-                console.log('ingresando login PJUD');
-                await loginEstadoDiario();
-            } catch (error) {
-                throw error;
-            }
-            console.log('consulta estado diario competencia', competencia.nombre);
-            let reintento = 0;
-            while (true) {
+        console.log('consulta estado diario competencia', competencia.nombre);
+        let reintento = 0;
+        while (true) {
+            if (page.url() === config.targeturi) {
+                try {
+                    console.log('ingresando login PJUD');
+                    await loginEstadoDiario();
+                } catch (error) {
+                    throw error;
+                }
                 try {
                     await timeout(1000);
                     await page.waitForSelector(competencia.tabCompetencia);
@@ -1576,10 +1576,10 @@ router.post("/obtener_estado", async(req, res) => {
                         throw error;
                     }
                 }
+                return false;
             }
-            return false;
+            return true;
         }
-        return true;
     }
 
     async function loginEstadoDiario() {

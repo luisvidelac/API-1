@@ -1,0 +1,12 @@
+db.getCollection("causaapelaciones").remove({});
+db.getCollection("causaciviles").remove({});
+db.getCollection("causacobranzas").remove({});
+db.getCollection("causafamilias").remove({});
+db.getCollection("causalaborales").remove({});
+db.getCollection("causasupremas").remove({});
+db.getCollection("doctoapelaciones").remove({});
+db.getCollection("doctociviles").remove({});
+db.getCollection("doctocobranzas").remove({});
+db.getCollection("doctofamilias").remove({});
+db.getCollection("doctolaborales").remove({});
+db.getCollection("doctosupremas").remove({});

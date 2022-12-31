@@ -1,0 +1,295 @@
+/* causaciviles */
+
+db.getCollection('causaciviles').createIndex(
+  {
+    "Rol" : 1,
+    "Caratulado" : 1,
+    "Tribunal" : 1,
+    "FechaEstDia": 1,
+    "usuarios": 1
+},
+   {
+     name: "find_causaciviles"
+   }
+);
+
+db.getCollection('causaciviles').createIndex(
+  {
+    "updated_at" : 1
+},
+   {
+     name: "updated_at_causaciviles"
+   }
+);
+
+/* doctociviles */
+
+db.getCollection('doctociviles').createIndex(
+  {
+    "Rol" : 1,
+    "Caratulado" : 1,
+    "Tribunal" : 1,
+    "FechaEstDia": 1,
+    "usuarios": 1
+},
+   {
+     name: "find_doctociviles"
+   }
+);
+
+db.getCollection('doctociviles').createIndex(
+  {
+    "uuid" : 1
+},
+   {
+     name: "uuid_doctociviles"
+   }
+);
+
+/* causasupremas */
+
+db.getCollection('causasupremas').createIndex(
+  {
+    "N° Ingreso": 1,
+    "Tipo Recurso": 1,
+    "Caratulado": 1,
+    "FechaEstDia": 1,
+    "usuarios": 1
+},
+   {
+     name: "find_causasupremas"
+   }
+);
+
+db.getCollection('causasupremas').createIndex(
+  {
+    "updated_at" : 1
+},
+   {
+     name: "updated_at_causasupremas"
+   }
+);
+
+/* doctosupremas */
+
+db.getCollection('doctosupremas').createIndex(
+  {
+    "N° Ingreso": 1,
+    "Tipo Recurso": 1,
+    "Caratulado": 1,
+    "FechaEstDia": 1,
+    "usuarios": 1
+},
+   {
+     name: "find_doctosupremas"
+   }
+);
+
+db.getCollection('doctosupremas').createIndex(
+  {
+    "uuid" : 1
+},
+   {
+     name: "uuid_doctosupremas"
+   }
+);
+
+/* causaapelaciones */
+
+db.getCollection('causaapelaciones').createIndex(
+  {
+
+    "N° Ingreso": 1,
+    "Ubicación": 1,
+    "Corte": 1,
+    "Caratulado": 1,
+    "FechaEstDia": 1,
+    "usuarios": 1
+},
+   {
+     name: "find_causaapelaciones"
+   }
+);
+
+db.getCollection('causaapelaciones').createIndex(
+  {
+    "updated_at" : 1
+},
+   {
+     name: "updated_at_causaapelaciones"
+   }
+);
+
+/* doctoapelaciones */
+
+db.getCollection('doctoapelaciones').createIndex(
+  {
+    "N° Ingreso": 1,
+    "Corte": 1,
+    "Caratulado": 1,
+    "FechaEstDia": 1,
+    "usuarios": 1
+},
+   {
+     name: "find_doctoapelaciones"
+   }
+);
+
+db.getCollection('doctoapelaciones').createIndex(
+  {
+    "uuid" : 1
+},
+   {
+     name: "uuid_doctoapelaciones"
+   }
+);
+
+/* causacobranzas */
+
+db.getCollection('causacobranzas').createIndex(
+  {
+    "Rit": 1,
+    "Ruc": 1,
+    "Caratulado": 1,
+    "Tribunal": 1,
+    "FechaEstDia": 1,
+    "usuarios": 1
+},
+   {
+     name: "find_causacobranzas"
+   }
+);
+
+db.getCollection('causacobranzas').createIndex(
+  {
+    "updated_at" : 1
+},
+   {
+     name: "updated_at_causacobranzas"
+   }
+);
+
+/* doctocobranzas */
+
+db.getCollection('doctocobranzas').createIndex(
+  {
+    "Rit": 1,
+    "Ruc": 1,
+    "Caratulado": 1,
+    "Tribunal": 1,
+    "FechaEstDia": 1,
+    "usuarios": 1
+},
+   {
+     name: "find_doctocobranzas"
+   }
+);
+
+db.getCollection('doctocobranzas').createIndex(
+  {
+    "uuid" : 1
+},
+   {
+     name: "uuid_doctocobranzas"
+   }
+);
+
+/* causafamilias */
+
+db.getCollection('causafamilias').createIndex(
+  {
+    "Rit": 1,
+    "Ruc": 1,
+    "Estado": 1,
+    "Tribunal": 1,
+    "Caratulado": 1,
+    "FechaEstDia": 1,
+    "usuarios": 1
+},
+   {
+     name: "find_causafamilias"
+   }
+);
+
+db.getCollection('causafamilias').createIndex(
+  {
+    "updated_at" : 1
+},
+   {
+     name: "updated_at_causafamilias"
+   }
+);
+
+/* doctofamilias */
+
+db.getCollection('doctofamilias').createIndex(
+  {
+    "Rit": 1,
+    "Ruc": 1,
+    "Tribunal": 1,
+    "FechaEstDia": 1,
+    "usuarios": 1
+},
+   {
+     name: "find_doctofamilias"
+   }
+);
+
+db.getCollection('doctofamilias').createIndex(
+  {
+    "uuid" : 1
+},
+   {
+     name: "uuid_doctofamilias"
+   }
+);
+
+/* causalaborales */
+
+db.getCollection('causalaborales').createIndex(
+  {
+    "Rit": 1,
+    "Ruc": 1,
+    "Caratulado": 1,
+    "Tribunal": 1,
+    "FechaEstDia": 1,
+    "usuarios": 1
+},
+   {
+     name: "find_causalaborales"
+   }
+);
+
+db.getCollection('causalaborales').createIndex(
+  {
+    "updated_at" : 1
+},
+   {
+     name: "updated_at_causalaborales"
+   }
+);
+
+/* doctolaborales */
+
+db.getCollection('doctolaborales').createIndex(
+  {
+    "Rit": 1,
+    "Ruc": 1,
+    "Caratulado": 1,
+    "Tribunal": 1,
+    "FechaEstDia": 1,
+    "usuarios": 1
+},
+   {
+     name: "find_doctolaborales"
+   }
+);
+
+db.getCollection('doctolaborales').createIndex(
+  {
+    "uuid" : 1
+},
+   {
+     name: "uuid_doctolaborales"
+   }
+);
