@@ -1933,10 +1933,10 @@ router.post("/obtener_estado", async(req, res) => {
             }
             if (reload) {
                 await refreshCausas(competencia);
-                if (competencia.detalle === 'civil') {
+                if (competencia.nombre === 'civil') {
                     result = await refreshDetalleCiviles(competencia, dataRows, result, fecha);
                 }
-                if (competencia.detalle === "cobranza") {
+                if (competencia.nombre === "cobranza") {
                     result = await refreshDetalleCobranza(competencia, dataRows, result, fecha);
                 }
                 continue;
@@ -2343,22 +2343,19 @@ router.post("/obtener_estado", async(req, res) => {
                     } catch (error) {
                         console.log("error en openRowModalSuprema 1:::", error);
                         await page.screenshot({ path: './error.png' });
-                        for (let cont = 1; cont <= 3; cont++) {
-                            try {
-                                await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
-                                let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
-                                let value = await page.evaluate(el => el.textContent, element);
-                                if (value === 'El vinculo ha expirado, por favor consulte nuevamente.') {
-                                    expirado = true;
-                                    return [];
-                                }
-                                if (value === 'Causa No Disponible.') {
-                                    return "Causa No Disponible";
-                                }
-                            } catch (error) {
-
+                        try {
+                            await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
+                            let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
+                            let value = await page.evaluate(el => el.textContent, element);
+                            if (value === 'El vinculo ha expirado, por favor consulte nuevamente.') {
+                                expirado = true;
+                                return [];
                             }
-                            await timeout(1000);
+                            if (value === 'Causa No Disponible.') {
+                                return "Causa No Disponible";
+                            }
+                        } catch (error) {
+
                         }
 
                     }
@@ -2437,22 +2434,19 @@ router.post("/obtener_estado", async(req, res) => {
                     } catch (error) {
                         console.log("error en openRowModalApelaciones 1:::", error);
                         await page.screenshot({ path: './error.png' });
-                        for (let cont = 1; cont <= 3; cont++) {
-                            try {
-                                await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
-                                let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
-                                let value = await page.evaluate(el => el.textContent, element);
-                                if (value === 'El vinculo ha expirado, por favor consulte nuevamente.') {
-                                    expirado = true;
-                                    return [];
-                                }
-                                if (value === 'Causa No Disponible.') {
-                                    return "Causa No Disponible";
-                                }
-                            } catch (error) {
-
+                        try {
+                            await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
+                            let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
+                            let value = await page.evaluate(el => el.textContent, element);
+                            if (value === 'El vinculo ha expirado, por favor consulte nuevamente.') {
+                                expirado = true;
+                                return [];
                             }
-                            await timeout(1000);
+                            if (value === 'Causa No Disponible.') {
+                                return "Causa No Disponible";
+                            }
+                        } catch (error) {
+
                         }
 
                     }
@@ -2531,22 +2525,19 @@ router.post("/obtener_estado", async(req, res) => {
                     } catch (error) {
                         console.log("error en openRowModalLaborales 1:::", error);
                         await page.screenshot({ path: './error.png' });
-                        for (let cont = 1; cont <= 3; cont++) {
-                            try {
-                                await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
-                                let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
-                                let value = await page.evaluate(el => el.textContent, element);
-                                if (value === 'El vinculo ha expirado, por favor consulte nuevamente.') {
-                                    expirado = true;
-                                    return [];
-                                }
-                                if (value === 'Causa No Disponible.') {
-                                    return "Causa No Disponible";
-                                }
-                            } catch (error) {
-
+                        try {
+                            await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
+                            let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
+                            let value = await page.evaluate(el => el.textContent, element);
+                            if (value === 'El vinculo ha expirado, por favor consulte nuevamente.') {
+                                expirado = true;
+                                return [];
                             }
-                            await timeout(1000);
+                            if (value === 'Causa No Disponible.') {
+                                return "Causa No Disponible";
+                            }
+                        } catch (error) {
+
                         }
 
                     }
@@ -2623,26 +2614,22 @@ router.post("/obtener_estado", async(req, res) => {
                         });
 
                     } catch (error) {
-                        console.log("error en openRowModal 1:::", error);
+                        console.log("error en openRowModal Civiles 1:::", error);
                         await page.screenshot({ path: './error.png' });
-                        for (let cont = 1; cont <= 3; cont++) {
-                            try {
-                                await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
-                                let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
-                                let value = await page.evaluate(el => el.textContent, element);
-                                if (value === 'El vinculo ha expirado, por favor consulte nuevamente.') {
-                                    expirado = true;
-                                    return [];
-                                }
-                                if (value === 'Causa No Disponible.') {
-                                    return "Causa No Disponible";
-                                }
-                            } catch (error) {
-
+                        try {
+                            await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
+                            let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
+                            let value = await page.evaluate(el => el.textContent, element);
+                            if (value === 'El vinculo ha expirado, por favor consulte nuevamente.') {
+                                expirado = true;
+                                return [];
                             }
-                            await timeout(1000);
-                        }
+                            if (value === 'Causa No Disponible.') {
+                                return "Causa No Disponible";
+                            }
+                        } catch (error) {
 
+                        }
                     }
 
                     if (receptor) {
@@ -2698,7 +2685,7 @@ router.post("/obtener_estado", async(req, res) => {
                     if (intentos > 3) {
                         break;
                     }
-                    console.log("error openRowModal 2:::", error);
+                    console.log("error openRowModal 3:::", error);
                     await page.screenshot({ path: './error.png' });
                     try {
                         await validateLogin(competencia);
@@ -2712,7 +2699,7 @@ router.post("/obtener_estado", async(req, res) => {
             return row || [];
         } catch (error) {
             await page.screenshot({ path: './error.png' })
-            console.log("error openRowModal:", error);
+            console.log("error openRowModal 4:", error);
             throw error;
         }
     }
@@ -2745,22 +2732,19 @@ router.post("/obtener_estado", async(req, res) => {
                     } catch (error) {
                         console.log("error en openRowModalFamilia 1:::", error);
                         await page.screenshot({ path: './error.png' });
-                        for (let cont = 1; cont <= 3; cont++) {
-                            try {
-                                await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
-                                let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
-                                let value = await page.evaluate(el => el.textContent, element);
-                                if (value === 'El vinculo ha expirado, por favor consulte nuevamente.') {
-                                    expirado = true;
-                                    return [];
-                                }
-                                if (value === 'Causa No Disponible.') {
-                                    return "Causa No Disponible";
-                                }
-                            } catch (error) {
-
+                        try {
+                            await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
+                            let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
+                            let value = await page.evaluate(el => el.textContent, element);
+                            if (value === 'El vinculo ha expirado, por favor consulte nuevamente.') {
+                                expirado = true;
+                                return [];
                             }
-                            await timeout(1000);
+                            if (value === 'Causa No Disponible.') {
+                                return "Causa No Disponible";
+                            }
+                        } catch (error) {
+
                         }
 
                     }
