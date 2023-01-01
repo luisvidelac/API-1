@@ -680,7 +680,7 @@ router.post("/obtener_estado", async(req, res) => {
             try {
                 console.log('cargando pagina inicial de PJUD');
                 await page.goto(config.targeturi, {
-                    waitUntil: 'networkidle0',
+                    waitUntil: 'domcontentloaded',
                 });
 
                 await validateLogin(competencia);
@@ -1622,7 +1622,7 @@ router.post("/obtener_estado", async(req, res) => {
                 } catch (error) {
                     console.log("error loginEstadoDiario:", error);
                     await page.goto(config.targeturi, {
-                        waitUntil: 'networkidle0',
+                        waitUntil: 'domcontentloaded',
                     });
                     reitento++;
                     if (reitento > 3) {
@@ -1793,7 +1793,7 @@ router.post("/obtener_estado", async(req, res) => {
                 await deleteDoctosSuprema([causa]);
                 console.log("antes de abrir el modal");
                 const modalContent = await openRowModalSuprema(competencia, causa, usuario, fecha);
-                console.log("despuedes de abrir el modal:", modalContent);
+                console.log("despues de abrir el modal:", modalContent);
                 if (modalContent === "Causa No Disponible") {
                     throw Error("Causa No Disponible");
                 }
@@ -1829,7 +1829,7 @@ router.post("/obtener_estado", async(req, res) => {
                 await deleteDoctosApelaciones([causa]);
                 console.log("antes de abrir el modal");
                 const modalContent = await openRowModalApelaciones(competencia, causa, usuario, fecha);
-                console.log("despuedes de abrir el modal:", modalContent);
+                console.log("despues de abrir el modal:", modalContent);
                 if (modalContent === "Causa No Disponible") {
                     throw Error("Causa No Disponible");
                 }
@@ -1865,7 +1865,7 @@ router.post("/obtener_estado", async(req, res) => {
                 await deleteDoctosFamilia([causa]);
                 console.log("antes de abrir el modal");
                 const modalContent = await openRowModalFamilia(competencia, causa, usuario, fecha);
-                console.log("despuedes de abrir el modal:", modalContent);
+                console.log("despues de abrir el modal:", modalContent);
                 if (modalContent === "Causa No Disponible") {
                     throw Error("Causa No Disponible");
                 }
@@ -1906,7 +1906,7 @@ router.post("/obtener_estado", async(req, res) => {
                 }
                 console.log("antes de abrir el modal");
                 const modalContent = await openRowModal(competencia, causa, usuario, fecha, receptor);
-                console.log("despuedes de abrir el modal:", modalContent);
+                console.log("despues de abrir el modal:", modalContent);
                 if (modalContent === "Causa No Disponible") {
                     throw Error("Causa No Disponible");
                 }
@@ -1958,7 +1958,7 @@ router.post("/obtener_estado", async(req, res) => {
                 await deleteDoctosLaborales([causa]);
                 console.log("antes de abrir el modal");
                 const modalContent = await openRowModalLaborales(competencia, causa, usuario, fecha);
-                console.log("despuedes de abrir el modal:", modalContent);
+                console.log("despues de abrir el modal:", modalContent);
                 if (modalContent === "Causa No Disponible") {
                     throw Error("Causa No Disponible");
                 }

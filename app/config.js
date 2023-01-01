@@ -18,6 +18,7 @@ const config = {
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
+            '--disable-accelerated-2d-canvas',
             '--disable-gpu',
             '--use-gl=egl',
             '--disable-site-isolation-trials',
