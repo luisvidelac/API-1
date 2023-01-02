@@ -317,17 +317,6 @@ router.post("/obtener_estado", async(req, res) => {
         }
     }
 
-
-
-    function getBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-    }
-
     function promiseAllP(items, block) {
         var promises = [];
         items.forEach(function(item, index) {
@@ -362,12 +351,19 @@ router.post("/obtener_estado", async(req, res) => {
 
     async function procesoTodasCausas(competencias, fechas, usuario) {
         const causas = [];
+        console.log('cargando pagina inicial de PJUD procesoTodasCausas');
+        await page.goto(config.targeturi, {
+            waitUntil: 'domcontentloaded',
+        });
+        await loginEstadoDiario();
         for await (const fecha of fechas) {
+            peticion.fecha = fecha;
             const obj = {};
             for await (const competencia of competencias) {
-                peticion.fecha = fecha;
+                await selectTabCompetencia(competencia);
+                console.log('consulta estado diario ' + competencia.nombre);
+                await consultaEstadoDiario(competencia);
                 console.log('iniciando consulta de competencia:', competencia.nombre, ' usuario:', peticion.usuario, ' fecha:', fecha);
-                await cargaPaginaPrincipal(competencia);
                 let detalle = competencia.detalle;
                 let rows = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
                 if (rows > 1) {
@@ -376,7 +372,6 @@ router.post("/obtener_estado", async(req, res) => {
                     obj[competencia.nombre] = cantCausas;
                 }
             }
-            await cargaPaginaPrincipal(competencias[0]);
             await page.waitForSelector('#BtnLoadExcelEstadoDiario');
             await page.click('#BtnLoadExcelEstadoDiario');
 
@@ -1552,18 +1547,7 @@ router.post("/obtener_estado", async(req, res) => {
                     throw error;
                 }
                 try {
-                    await timeout(1000);
-                    await page.waitForSelector(competencia.tabCompetencia);
-                    await page.click(competencia.tabCompetencia);
-                    await timeout(1000);
-                    try {
-                        await page.waitForSelector(competencia.cargandoCompetencia);
-                        await page.waitForSelector(competencia.cargandoCompetencia, {
-                            hidden: true
-                        });
-                    } catch (error) {
-
-                    }
+                    await selectTabCompetencia(competencia);
                     console.log('consulta estado diario ' + competencia.nombre);
                     await consultaEstadoDiario(competencia);
                     break;
@@ -1579,6 +1563,21 @@ router.post("/obtener_estado", async(req, res) => {
                 return false;
             }
             return true;
+        }
+    }
+
+    async function selectTabCompetencia(competencia) {
+        await timeout(1000);
+        await page.waitForSelector(competencia.tabCompetencia);
+        await page.click(competencia.tabCompetencia);
+        await timeout(1000);
+        try {
+            await page.waitForSelector(competencia.cargandoCompetencia);
+            await page.waitForSelector(competencia.cargandoCompetencia, {
+                hidden: true
+            });
+        } catch (error) {
+
         }
     }
 
