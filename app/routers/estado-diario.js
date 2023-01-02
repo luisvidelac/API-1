@@ -432,14 +432,14 @@ router.post("/obtener_estado", async(req, res) => {
             if (rows > 1) {
 
                 let obj = await obtenerCausas(competencia, true, fecha);
-                causas = obj.causas;
+                let objcausas = obj.causas;
                 paginas = obj.paginas;
                 causaTitle = obj.causaTitle;
 
                 if (competencia.nombre === "suprema") {
-                    let causasfilter = await getCausasSupremaBD(causas);
+                    let causasfilter = await getCausasSupremaBD(objcausas);
                     const causasdiff = [];
-                    for await (const causa of causas) {
+                    for await (const causa of objcausas) {
                         let bus = causasfilter.filter(c => c["N° Ingreso"] === causa["N° Ingreso"] && c["Tipo Recurso"] === causa["Tipo Recurso"] && c["Fecha Ingreso"] === causa["Fecha Ingreso"] && c.Caratulado === causa.Caratulado);
                         if (!bus) {
                             causasdiff.push(causa);
@@ -449,18 +449,18 @@ router.post("/obtener_estado", async(req, res) => {
                     await page.setDefaultTimeout(config.maxTimeout);
                     await page.setDefaultNavigationTimeout(config.maxTimeout);
 
-                    causas = await getCausasSupremaModal(competencia, causasfilter, paginas, peticion.usuario, fecha);
+                    let causasmodal = await getCausasSupremaModal(competencia, causasfilter, paginas, peticion.usuario, fecha);
 
-                    causas = causas.concat(causasdiff);
+                    causas = causas.concat(causasmodal).concat(causasdiff);
 
                     await deepReplaceSuprema(causas, 'url');
 
                 }
 
                 if (competencia.nombre === "apelaciones") {
-                    let causasfilter = await getCausasApelacionesBD(causas);
+                    let causasfilter = await getCausasApelacionesBD(objcausas);
                     const causasdiff = [];
-                    for await (const causa of causas) {
+                    for await (const causa of objcausas) {
                         let bus = causasfilter.filter(c => c["N° Ingreso"] === causa["N° Ingreso"] && c["Fecha Ingreso"] === causa["Fecha Ingreso"] && c["Ubicación"] === causa["Ubicación"] && c["Fecha Ubicación"] === causa["Fecha Ubicación"] && c.Corte === causa.Corte && c.Caratulado === causa.Caratulado);
                         if (!bus) {
                             causasdiff.push(causa);
@@ -470,18 +470,18 @@ router.post("/obtener_estado", async(req, res) => {
                     await page.setDefaultTimeout(config.maxTimeout);
                     await page.setDefaultNavigationTimeout(config.maxTimeout);
 
-                    causas = await getCausasApelacionesModal(competencia, causasfilter, paginas, peticion.usuario, fecha);
+                    let causasmodal = await getCausasApelacionesModal(competencia, causasfilter, paginas, peticion.usuario, fecha);
 
-                    causas = causas.concat(causasdiff);
+                    causas = causas.concat(causasmodal).concat(causasdiff);
 
                     await deepReplaceApelaciones(causas, 'url');
 
                 }
 
                 if (competencia.nombre === "civil") {
-                    let causasfilter = await getCausasCivilesBD(causas, receptor);
+                    let causasfilter = await getCausasCivilesBD(objcausas, receptor);
                     const causasdiff = [];
-                    for await (const causa of causas) {
+                    for await (const causa of objcausas) {
                         let bus = causasfilter.filter(c => c.Rol === causa.Rol && c.Fecha === causa.Fecha && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
                         if (!bus) {
                             causasdiff.push(causa);
@@ -491,18 +491,18 @@ router.post("/obtener_estado", async(req, res) => {
                     await page.setDefaultTimeout(config.maxTimeout);
                     await page.setDefaultNavigationTimeout(config.maxTimeout);
 
-                    causas = await getCausasModal(competencia, causasfilter, paginas, peticion.usuario, fecha, receptor);
+                    let causasmodal = await getCausasModal(competencia, causasfilter, paginas, peticion.usuario, fecha, receptor);
 
-                    causas = causas.concat(causasdiff);
+                    causas = causas.concat(causasmodal).concat(causasdiff);
 
                     await deepReplace(causas, 'url');
 
                 }
 
                 if (competencia.nombre === "laboral") {
-                    let causasfilter = await getCausasLaboralesBD(causas);
+                    let causasfilter = await getCausasLaboralesBD(objcausas);
                     const causasdiff = [];
-                    for await (const causa of causas) {
+                    for await (const causa of objcausas) {
                         let bus = causasfilter.filter(c => c["Rit"] === causa["Rit"] && c["Ruc"] === causa["Ruc"] && c["Fecha Ingreso"] === causa["Fecha Ingreso"] && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
                         if (!bus) {
                             causasdiff.push(causa);
@@ -512,18 +512,18 @@ router.post("/obtener_estado", async(req, res) => {
                     await page.setDefaultTimeout(config.maxTimeout);
                     await page.setDefaultNavigationTimeout(config.maxTimeout);
 
-                    causas = await getCausasLaboralesModal(competencia, causasfilter, paginas, peticion.usuario, fecha);
+                    let causasmodal = await getCausasLaboralesModal(competencia, causasfilter, paginas, peticion.usuario, fecha);
 
-                    causas = causas.concat(causasdiff);
+                    causas = causas.concat(causasmodal).concat(causasdiff);
 
                     await deepReplaceLaborales(causas, 'url');
 
                 }
 
                 if (competencia.nombre === "cobranza") {
-                    let causasfilter = await getCausasCobranzaBD(causas, receptor);
+                    let causasfilter = await getCausasCobranzaBD(objcausas, receptor);
                     const causasdiff = [];
-                    for await (const causa of causas) {
+                    for await (const causa of objcausas) {
                         let bus = causasfilter.filter(c => c.Rit === causa.Rit && c.Ruc === causa.Ruc && c.Fecha === causa.Fecha && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
                         if (!bus) {
                             causasdiff.push(causa);
@@ -533,18 +533,18 @@ router.post("/obtener_estado", async(req, res) => {
                     await page.setDefaultTimeout(config.maxTimeout);
                     await page.setDefaultNavigationTimeout(config.maxTimeout);
 
-                    causas = await getCausasModal(competencia, causasfilter, paginas, peticion.usuario, fecha, receptor);
+                    let causasmodal = await getCausasModal(competencia, causasfilter, paginas, peticion.usuario, fecha, receptor);
 
-                    causas = causas.concat(causasdiff);
+                    causas = causas.concat(causasmodal).concat(causasdiff);
 
                     await deepReplace(causas, 'url');
 
                 }
 
                 if (competencia.nombre === "familia") {
-                    let causasfilter = await getCausasFamiliaBD(causas);
+                    let causasfilter = await getCausasFamiliaBD(objcausas);
                     const causasdiff = [];
-                    for await (const causa of causas) {
+                    for await (const causa of objcausas) {
                         let bus = causasfilter.filter(c => c["Rit"] === causa["Rit"] && c["Ruc"] === causa["Ruc"] && c["Estado"] === causa["Estado"] && c["Fecha"] === causa["Fecha"] && c.Tribunal === causa.Tribunal && c.Caratulado === causa.Caratulado);
                         if (!bus) {
                             causasdiff.push(causa);
@@ -554,9 +554,9 @@ router.post("/obtener_estado", async(req, res) => {
                     await page.setDefaultTimeout(config.maxTimeout);
                     await page.setDefaultNavigationTimeout(config.maxTimeout);
 
-                    causas = await getCausasFamiliaModal(competencia, causasfilter, paginas, peticion.usuario, fecha);
+                    let causasmodal = await getCausasFamiliaModal(competencia, causasfilter, paginas, peticion.usuario, fecha);
 
-                    causas = causas.concat(causasdiff);
+                    causas = causas.concat(causasmodal).concat(causasdiff);
 
                     await deepReplaceFamilia(causas, 'url');
 
@@ -1414,7 +1414,7 @@ router.post("/obtener_estado", async(req, res) => {
         }
     }
 
-    async function getCausasCivilesBD(causaspjud) {
+    async function getCausasCivilesBD(causaspjud, receptor) {
         const retorno = [];
         try {
 
