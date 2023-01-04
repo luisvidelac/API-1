@@ -254,34 +254,44 @@ router.post("/obtener_estado", async(req, res) => {
 
     const start = process.hrtime();
     console.log('iniciando proceso carga estado diario usuario:', peticion.usuario);
-
-    puppeteer.use(hidden());
-    let browser = await puppeteer.launch({
-        ignoreHTTPSErrors: true,
-        executablePath: executablePath(),
-        ...config.launchConf
-    });
-
-    //const page = await browser.newPage();
-    const [page] = await browser.pages();
-    await page.setCacheEnabled(false);
-    await page.setDefaultTimeout(config.timeout);
-    await page.setDefaultNavigationTimeout(config.timeout);
-
-    await page.setViewport({ width: 2000, height: 4000 });
-
-    const client = await page.target().createCDPSession();
-    await client.send('Page.setDownloadBehavior', {
-        behavior: 'allow',
-        downloadPath: path.resolve('./downloads'),
-    });
-
+    let browser;
+    let page;
     try {
+        console.log('inicio carga puppeteer');
+        puppeteer.use(hidden());
+        browser = await puppeteer.launch({
+            ignoreHTTPSErrors: true,
+            executablePath: executablePath(),
+            ...config.launchConf
+        });
+        console.log('termino carga puppeteer');
+
+        console.log('carga browser puppeteer');
+        //const page = await browser.newPage();
+        [page] = await browser.pages();
+        await page.setCacheEnabled(false);
+        await page.setDefaultTimeout(config.timeout);
+        await page.setDefaultNavigationTimeout(config.timeout);
+        console.log('termino browser puppeteer');
+        console.log('ajuste pantalla puppeteer');
+
+        await page.setViewport({ width: 2000, height: 4000 });
+
+        console.log('termino carga de puppeteer');
+
+        const client = await page.target().createCDPSession();
+        await client.send('Page.setDownloadBehavior', {
+            behavior: 'allow',
+            downloadPath: path.resolve('./downloads'),
+        });
+        console.log('inicio de proceso puppeteer');
         let causas = [];
 
         if (!total) {
+            console.log('inicio de proceso por competencia');
             causas = await procesoPrincipal(competencia, causas, fechas);
         } else {
+            console.log('inicio de proceso carga de totales');
             causas = await procesoTodasCausas(competencias, fechas, peticion.usuario);
         }
 
