@@ -259,6 +259,7 @@ router.post("/obtener_estado", async(req, res) => {
     try {
         console.log('inicio carga puppeteer');
         puppeteer.use(hidden());
+        console.log("DISPLAY:", process.env.DISPLAY);
         browser = await puppeteer.launch({
             ignoreHTTPSErrors: true,
             executablePath: executablePath(),

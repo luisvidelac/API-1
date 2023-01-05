@@ -24,6 +24,9 @@ const config = {
             '--disable-site-isolation-trials',
             '--disable-dev-shm-usage'
         ],
+        env: {
+            DISPLAY: process.env.DISPLAY
+        }
 
     }
 }
