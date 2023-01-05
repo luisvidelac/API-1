@@ -1374,7 +1374,7 @@ router.post("/obtener_estado", async(req, res) => {
             yourDate = new Date(yourDate.getTime() - (offset * 60 * 1000))
             let fechaAct = yourDate.toISOString().split('T')[0];
             let consulta = {
-                "$where": "this.updated_at.toJSON().slice(0, 10) != '" + fechaAct + "'"
+                "$where": "this.updated_at.toJSON().slice(0, 10) < '" + fechaAct + "'"
             };
 
             const causas = await causaSupremaModel.find(consulta);
@@ -1401,7 +1401,7 @@ router.post("/obtener_estado", async(req, res) => {
             yourDate = new Date(yourDate.getTime() - (offset * 60 * 1000))
             let fechaAct = yourDate.toISOString().split('T')[0];
             let consulta = {
-                "$where": "this.updated_at.toJSON().slice(0, 10) != '" + fechaAct + "'"
+                "$where": "this.updated_at.toJSON().slice(0, 10) < '" + fechaAct + "'"
             };
 
             const causas = await causaApelacionesModel.find(consulta);
@@ -1430,13 +1430,13 @@ router.post("/obtener_estado", async(req, res) => {
             let consulta = {};
             if (!receptor) {
                 consulta = {
-                    "$where": "this.updated_at.toJSON().slice(0, 10) != '" + fechaAct + "'"
+                    "$where": "this.updated_at.toJSON().slice(0, 10) < '" + fechaAct + "'"
                 };
             }
 
             if (receptor) {
                 consulta = {
-                    "$where": "this.updated_at_receptores.toJSON().slice(0, 10) != '" + fechaAct + "'"
+                    "$where": "this.updated_at_receptores.toJSON().slice(0, 10) < '" + fechaAct + "'"
                 };
             }
 
@@ -1464,7 +1464,7 @@ router.post("/obtener_estado", async(req, res) => {
             yourDate = new Date(yourDate.getTime() - (offset * 60 * 1000))
             let fechaAct = yourDate.toISOString().split('T')[0];
             let consulta = {
-                "$where": "this.updated_at.toJSON().slice(0, 10) != '" + fechaAct + "'"
+                "$where": "this.updated_at.toJSON().slice(0, 10) < '" + fechaAct + "'"
             };
 
             const causas = await causaLaboralesModel.find(consulta);
@@ -1493,13 +1493,13 @@ router.post("/obtener_estado", async(req, res) => {
             let consulta = {};
             if (!receptor) {
                 consulta = {
-                    "$where": "this.updated_at.toJSON().slice(0, 10) != '" + fechaAct + "'"
+                    "$where": "this.updated_at.toJSON().slice(0, 10) < '" + fechaAct + "'"
                 };
             }
 
             if (receptor) {
                 consulta = {
-                    "$where": "this.updated_at_receptores.toJSON().slice(0, 10) != '" + fechaAct + "'"
+                    "$where": "this.updated_at_receptores.toJSON().slice(0, 10) < '" + fechaAct + "'"
                 };
             }
 
@@ -1527,7 +1527,7 @@ router.post("/obtener_estado", async(req, res) => {
             yourDate = new Date(yourDate.getTime() - (offset * 60 * 1000))
             let fechaAct = yourDate.toISOString().split('T')[0];
             let consulta = {
-                "$where": "this.updated_at.toJSON().slice(0, 10) != '" + fechaAct + "'"
+                "$where": "this.updated_at.toJSON().slice(0, 10) < '" + fechaAct + "'"
             };
 
             const causas = await causaFamiliaModel.find(consulta);
