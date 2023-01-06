@@ -8,6 +8,7 @@ const schema = mongoose.Schema({
     "Rit": String,
     "Ruc": String,
     "Tribunal": String,
+    "Caratulado": String,
     "FechaEstDia": String,
     "usuarios": [],
     "created_at": { type: Date },

@@ -229,6 +229,7 @@ db.getCollection('doctofamilias').createIndex(
     "Rit": 1,
     "Ruc": 1,
     "Tribunal": 1,
+    "Caratulado": 1,
     "FechaEstDia": 1,
     "usuarios": 1
 },
