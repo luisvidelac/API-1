@@ -1383,7 +1383,7 @@ router.post("/obtener_estado", async(req, res) => {
             for await (const causa of causas) {
                 let bus = causaspjud.find(c => c["N° Ingreso"] === causa["N° Ingreso"] && c["Tipo Recurso"] === causa["Tipo Recurso"] && c["Fecha Ingreso"] === causa["Fecha Ingreso"] && c.Caratulado === causa.Caratulado);
                 if (bus) {
-                    retorno.push({ Detalle: causa.Detalle, "N° Ingreso": causa["N° Ingreso"], "Tipo Recurso": causa["Tipo Recurso"], "Fecha Ingreso": causa["Fecha Ingreso"], Caratulado: causa.Caratulado });
+                    retorno.push({ Detalle: causa.Detalle, "N° Ingreso": causa["N° Ingreso"], "Tipo Recurso": causa["Tipo Recurso"], "Fecha Ingreso": causa["Fecha Ingreso"], Caratulado: causa.Caratulado, causa: causa.uuid });
                 }
             }
             return retorno;
@@ -1410,7 +1410,7 @@ router.post("/obtener_estado", async(req, res) => {
             for await (const causa of causas) {
                 let bus = causaspjud.find(c => c["N° Ingreso"] === causa["N° Ingreso"] && c["Fecha Ingreso"] === causa["Fecha Ingreso"] && c.Ubicacion === causa.Ubicacion && c["Fecha Ubicación"] === causa["Fecha Ubicación"] && c.Corte === causa.Corte && c.Caratulado === causa.Caratulado);
                 if (bus) {
-                    retorno.push({ Detalle: causa.Detalle, "N° Ingreso": causa["N° Ingreso"], "Fecha Ingreso": causa["Fecha Ingreso"], "Ubicación": causa["Ubicación"], "Fecha Ubicación": causa["Fecha Ubicación"], Corte: causa.Corte, Caratulado: causa.Caratulado });
+                    retorno.push({ Detalle: causa.Detalle, "N° Ingreso": causa["N° Ingreso"], "Fecha Ingreso": causa["Fecha Ingreso"], "Ubicación": causa["Ubicación"], "Fecha Ubicación": causa["Fecha Ubicación"], Corte: causa.Corte, Caratulado: causa.Caratulado, uuid: causa.uuid });
                 }
             }
             return retorno;
@@ -1446,7 +1446,7 @@ router.post("/obtener_estado", async(req, res) => {
             for await (const causa of causas) {
                 let bus = causaspjud.find(c => c.Rol === causa.Rol && c.Fecha === causa.Fecha && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
                 if (bus) {
-                    retorno.push({ Detalle: causa.Detalle, Rol: causa.Rol, Fecha: causa.Fecha, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
+                    retorno.push({ Detalle: causa.Detalle, Rol: causa.Rol, Fecha: causa.Fecha, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal, uuid: causa.uuid });
                 }
             }
             return retorno;
@@ -1473,7 +1473,7 @@ router.post("/obtener_estado", async(req, res) => {
             for await (const causa of causas) {
                 let bus = causaspjud.find(c => c["Rit"] === causa["Rit"] && c["Ruc"] === causa["Ruc"] && c["Fecha Ingreso"] === causa["Fecha Ingreso"] && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
                 if (bus) {
-                    retorno.push({ Detalle: causa.Detalle, "Rit": causa["Rit"], "Ruc": causa["Ruc"], "Fecha Ingreso": causa["Fecha Ingreso"], Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
+                    retorno.push({ Detalle: causa.Detalle, "Rit": causa["Rit"], "Ruc": causa["Ruc"], "Fecha Ingreso": causa["Fecha Ingreso"], Caratulado: causa.Caratulado, Tribunal: causa.Tribunal, uuid: causa.uuid });
                 }
             }
             return retorno;
@@ -1509,7 +1509,7 @@ router.post("/obtener_estado", async(req, res) => {
             for await (const causa of causas) {
                 let bus = causaspjud.find(c => c.Rit === causa.Rit && c.Ruc === causa.Ruc && c.Fecha === causa.Fecha && c.Caratulado === causa.Caratulado && c.Tribunal === causa.Tribunal);
                 if (bus) {
-                    retorno.push({ Detalle: causa.Detalle, Rit: causa.Rit, Ruc: causa.Ruc, Fecha: causa.Fecha, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal });
+                    retorno.push({ Detalle: causa.Detalle, Rit: causa.Rit, Ruc: causa.Ruc, Fecha: causa.Fecha, Caratulado: causa.Caratulado, Tribunal: causa.Tribunal, uuid: causa.uuid });
                 }
             }
             return retorno;
@@ -1536,7 +1536,7 @@ router.post("/obtener_estado", async(req, res) => {
             for await (const causa of causas) {
                 let bus = causaspjud.find(c => c["Rit"] === causa["Rit"] && c["Ruc"] === causa["Ruc"] && c.Estado === causa.Estado && c["Fecha"] === causa["Fecha"] && c.Tribunal === causa.Tribunal && c.Caratulado === causa.Caratulado);
                 if (bus) {
-                    retorno.push({ Detalle: causa.Detalle, "Rit": causa["Rit"], "Ruc": causa["Ruc"], "Estado": causa["Estado"], "Fecha": causa["Fecha"], Tribunal: causa.Tribunal, Caratulado: causa.Caratulado });
+                    retorno.push({ Detalle: causa.Detalle, "Rit": causa["Rit"], "Ruc": causa["Ruc"], "Estado": causa["Estado"], "Fecha": causa["Fecha"], Tribunal: causa.Tribunal, Caratulado: causa.Caratulado, uuid: causa.uuid });
                 }
             }
             return retorno;
