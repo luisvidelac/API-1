@@ -22,7 +22,8 @@ const config = {
             '--disable-gpu',
             '--use-gl=egl',
             '--disable-site-isolation-trials',
-            '--disable-dev-shm-usage'
+            '--disable-dev-shm-usage',
+            '--netifs-to-ignore=INTERFACE_TO_IGNORE'
         ],
         env: {
             DISPLAY: process.env.DISPLAY
