@@ -1,0 +1,7 @@
+use pjud;
+db.createUser( { user: "pjud",
+pwd: "pjud",
+roles: [         {
+"role" : "dbOwner",
+"db" : "pjud"
+}]});
