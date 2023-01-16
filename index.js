@@ -61,7 +61,7 @@ app.get('/*', (req, res) => {
 app.post('/*', (req, res) => {
     res.status(401).send('acceso no autorizado');
 });
-
+mongoose.set("strictQuery", false);
 mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true })
     .then(() => {
         console.log('mongo conectado:', process.env.MONGO_URL);
