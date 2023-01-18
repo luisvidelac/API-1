@@ -68,7 +68,9 @@ sudo systemctl disable mongod // configura el servicio abajo al reiniciar la maq
 
 [Create Index](../main/scripts/indexes.db)
 
-[Drop Collections](../main/scripts/remove.db)
+[Remove only data Collections](../main/scripts/remove.db)
+
+[Drop Collections index and data](../main/scripts/drop.db)
 
 ## Resumen APIs
 
