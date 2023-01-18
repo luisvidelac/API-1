@@ -308,14 +308,16 @@ router.post("/obtener_estado", async(req, res) => {
     } catch (error) {
         console.log("error en principal:", error.message ? error.message : error);
         if (page) {
-            await page.screenshot({ path: './error.png' })
-            if (page.url() != config.targeturi) {
-                try {
-                    await page.evaluate(`salir();`);
-                } catch (error) {
+            try {
+                await page.screenshot({ path: './error.png' })
+                if (page.url() != config.targeturi) {
+                    try {
+                        await page.evaluate(`salir();`);
+                    } catch (error) {
 
+                    }
                 }
-            }
+            } catch (error) {}
         }
         res.status(500).json({
             status: 500,
