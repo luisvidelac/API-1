@@ -319,6 +319,11 @@ router.post("/obtener_estado", async(req, res) => {
                 }
             } catch (error) {}
         }
+        console.log('palyload salida de error', {
+            status: 500,
+            msg: `Error`,
+            data: error.message ? error.message : error
+        });
         res.status(500).json({
             status: 500,
             msg: `Error`,
@@ -646,7 +651,9 @@ router.post("/obtener_estado", async(req, res) => {
                     result = await loop(competencia, causaTitle, num, fecha, result);
                 } catch (error) {
                     console.log("error obtenerCausas:", error);
-                    await page.screenshot({ path: './error.png' });
+                    try {
+                        await page.screenshot({ path: './error.png' });
+                    } catch (error) {}
                     throw error;
                 }
                 console.log("pagina:", num + 1, "de:", paginas);
@@ -697,7 +704,9 @@ router.post("/obtener_estado", async(req, res) => {
                 break;
             } catch (error) {
                 console.log("error de clave:::", error);
-                await page.screenshot({ path: './error.png' });
+                try {
+                    await page.screenshot({ path: './error.png' });
+                } catch (error) {}
                 if (error === 'Usuario o clave incorrectas.') {
                     console.log('Usuario o clave incorrectas.');
                     mensaje = error;
@@ -1569,7 +1578,9 @@ router.post("/obtener_estado", async(req, res) => {
                     reintento++;
                     if (reintento > 3) {
                         console.log('error validateLogin 2:', error, ' reintento: ', reintento);
-                        await page.screenshot({ path: './error.png' });
+                        try {
+                            await page.screenshot({ path: './error.png' });
+                        } catch (error) {}
                         throw error;
                     }
                 }
@@ -2014,7 +2025,9 @@ router.post("/obtener_estado", async(req, res) => {
                 reintento++;
                 if (reintento > 3) {
                     console.log('error refreshCausas 2:', error, ' reintento: ', reintento);
-                    await page.screenshot({ path: './error.png' });
+                    try {
+                        await page.screenshot({ path: './error.png' });
+                    } catch (error) {}
                     throw error;
                 }
             }
@@ -2108,7 +2121,9 @@ router.post("/obtener_estado", async(req, res) => {
                         throw error;
                     }
                     console.log("error en loop 1:", error);
-                    await page.screenshot({ path: './error.png' });
+                    try {
+                        await page.screenshot({ path: './error.png' });
+                    } catch (error) {}
                     await validateLogin(competencia);
                     continue;
                 }
@@ -2117,7 +2132,9 @@ router.post("/obtener_estado", async(req, res) => {
                     throw error;
                 }
                 console.log("error en loop 3:", error);
-                await page.screenshot({ path: './error.png' });
+                try {
+                    await page.screenshot({ path: './error.png' });
+                } catch (error) {}
                 reintento++;
                 if (reintento > 3) {
                     throw error;
@@ -2166,7 +2183,9 @@ router.post("/obtener_estado", async(req, res) => {
                         continue;
                     } catch (error) {
                         console.log("error en loop 4:", error);
-                        await page.screenshot({ path: './error.png' });
+                        try {
+                            await page.screenshot({ path: './error.png' });
+                        } catch (error) {}
                         reintento++;
                         if (reintento > 3) {
                             throw error;
@@ -2221,7 +2240,9 @@ router.post("/obtener_estado", async(req, res) => {
                     break;
                 } catch (error) {
                     console.log("error en getCausas 1:", error);
-                    await page.screenshot({ path: './error.png' });
+                    try {
+                        await page.screenshot({ path: './error.png' });
+                    } catch (error) {}
                     reintento++;
                     if (reintento > 3) {
                         console.log('ya probo 3 veces que no cargo 1');
@@ -2273,7 +2294,9 @@ router.post("/obtener_estado", async(req, res) => {
                                 continue;
                             } catch (error) {
                                 console.log("error en getCausas 2:", error);
-                                await page.screenshot({ path: './error.png' });
+                                try {
+                                    await page.screenshot({ path: './error.png' });
+                                } catch (error) {}
                                 reintento++;
                                 if (reintento > 3) {
                                     console.log('ya probo 3 veces que no cargo 2');
@@ -2286,7 +2309,9 @@ router.post("/obtener_estado", async(req, res) => {
                         }
                     } catch (error) {
                         console.log("error en getCausas 3:", error);
-                        await page.screenshot({ path: './error.png' });
+                        try {
+                            await page.screenshot({ path: './error.png' });
+                        } catch (error) {}
                         throw error;
                     }
 
@@ -2311,7 +2336,9 @@ router.post("/obtener_estado", async(req, res) => {
             return causas;
         } catch (error) {
             console.log("error en getCausas 4:", error);
-            await page.screenshot({ path: './error.png' })
+            try {
+                await page.screenshot({ path: './error.png' })
+            } catch (error) {}
             throw error;
         }
 
@@ -2344,7 +2371,9 @@ router.post("/obtener_estado", async(req, res) => {
 
                     } catch (error) {
                         console.log("error en openRowModalSuprema 1:::", error);
-                        await page.screenshot({ path: './error.png' });
+                        try {
+                            await page.screenshot({ path: './error.png' });
+                        } catch (error) {}
                         try {
                             await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
                             let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
@@ -2390,7 +2419,9 @@ router.post("/obtener_estado", async(req, res) => {
                         break;
                     }
                     console.log("error openRowModalSuprema 2:::", error);
-                    await page.screenshot({ path: './error.png' });
+                    try {
+                        await page.screenshot({ path: './error.png' });
+                    } catch (error) {}
                     try {
                         await validateLogin(competencia);
                     } catch (err) {}
@@ -2402,7 +2433,9 @@ router.post("/obtener_estado", async(req, res) => {
 
             return row || [];
         } catch (error) {
-            await page.screenshot({ path: './error.png' })
+            try {
+                await page.screenshot({ path: './error.png' })
+            } catch (error) {}
             console.log("error openRowModalSuprema:", error);
             throw error;
         }
@@ -2435,7 +2468,9 @@ router.post("/obtener_estado", async(req, res) => {
 
                     } catch (error) {
                         console.log("error en openRowModalApelaciones 1:::", error);
-                        await page.screenshot({ path: './error.png' });
+                        try {
+                            await page.screenshot({ path: './error.png' });
+                        } catch (error) {}
                         try {
                             await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
                             let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
@@ -2481,7 +2516,9 @@ router.post("/obtener_estado", async(req, res) => {
                         break;
                     }
                     console.log("error openRowModalApelaciones 2:::", error);
-                    await page.screenshot({ path: './error.png' });
+                    try {
+                        await page.screenshot({ path: './error.png' });
+                    } catch (error) {}
                     try {
                         await validateLogin(competencia);
                     } catch (err) {}
@@ -2493,7 +2530,9 @@ router.post("/obtener_estado", async(req, res) => {
 
             return row || [];
         } catch (error) {
-            await page.screenshot({ path: './error.png' })
+            try {
+                await page.screenshot({ path: './error.png' })
+            } catch (error) {}
             console.log("error openRowModalApelaciones:", error);
             throw error;
         }
@@ -2526,7 +2565,9 @@ router.post("/obtener_estado", async(req, res) => {
 
                     } catch (error) {
                         console.log("error en openRowModalLaborales 1:::", error);
-                        await page.screenshot({ path: './error.png' });
+                        try {
+                            await page.screenshot({ path: './error.png' });
+                        } catch (error) {}
                         try {
                             await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
                             let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
@@ -2572,7 +2613,9 @@ router.post("/obtener_estado", async(req, res) => {
                         break;
                     }
                     console.log("error openRowModalLaborales 2:::", error);
-                    await page.screenshot({ path: './error.png' });
+                    try {
+                        await page.screenshot({ path: './error.png' });
+                    } catch (error) {}
                     try {
                         await validateLogin(competencia);
                     } catch (err) {}
@@ -2584,7 +2627,9 @@ router.post("/obtener_estado", async(req, res) => {
 
             return row || [];
         } catch (error) {
-            await page.screenshot({ path: './error.png' })
+            try {
+                await page.screenshot({ path: './error.png' })
+            } catch (error) {}
             console.log("error openRowModalLaborales:", error);
             throw error;
         }
@@ -2617,7 +2662,9 @@ router.post("/obtener_estado", async(req, res) => {
 
                     } catch (error) {
                         console.log("error en openRowModal Civiles 1:::", error);
-                        await page.screenshot({ path: './error.png' });
+                        try {
+                            await page.screenshot({ path: './error.png' });
+                        } catch (error) {}
                         try {
                             await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
                             let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
@@ -2688,7 +2735,9 @@ router.post("/obtener_estado", async(req, res) => {
                         break;
                     }
                     console.log("error openRowModal 3:::", error);
-                    await page.screenshot({ path: './error.png' });
+                    try {
+                        await page.screenshot({ path: './error.png' });
+                    } catch (error) {}
                     try {
                         await validateLogin(competencia);
                     } catch (err) {}
@@ -2700,7 +2749,9 @@ router.post("/obtener_estado", async(req, res) => {
 
             return row || [];
         } catch (error) {
-            await page.screenshot({ path: './error.png' })
+            try {
+                await page.screenshot({ path: './error.png' })
+            } catch (error) {}
             console.log("error openRowModal 4:", error);
             throw error;
         }
@@ -2733,7 +2784,9 @@ router.post("/obtener_estado", async(req, res) => {
 
                     } catch (error) {
                         console.log("error en openRowModalFamilia 1:::", error);
-                        await page.screenshot({ path: './error.png' });
+                        try {
+                            await page.screenshot({ path: './error.png' });
+                        } catch (error) {}
                         try {
                             await page.waitForSelector('body > div.sweet-alert.showSweetAlert.visible > p');
                             let element = await page.$('body > div.sweet-alert.showSweetAlert.visible > p');
@@ -2779,7 +2832,9 @@ router.post("/obtener_estado", async(req, res) => {
                         break;
                     }
                     console.log("error openRowModalFamilia 2:::", error);
-                    await page.screenshot({ path: './error.png' });
+                    try {
+                        await page.screenshot({ path: './error.png' });
+                    } catch (error) {}
                     try {
                         await validateLogin(competencia);
                     } catch (err) {}
@@ -2791,7 +2846,9 @@ router.post("/obtener_estado", async(req, res) => {
 
             return row || [];
         } catch (error) {
-            await page.screenshot({ path: './error.png' })
+            try {
+                await page.screenshot({ path: './error.png' })
+            } catch (error) {}
             console.log("error openRowModalFamilia:", error);
             throw error;
         }
@@ -2991,7 +3048,9 @@ router.post("/obtener_estado", async(req, res) => {
             return totalOptions;
         } catch (error) {
             console.log(" error en getModalCombo:::", error);
-            await page.screenshot({ path: './error.png' });
+            try {
+                await page.screenshot({ path: './error.png' });
+            } catch (error) {}
             throw error;
 
         }
@@ -3109,7 +3168,9 @@ router.post("/obtener_estado", async(req, res) => {
             return totalOptions;
         } catch (error) {
             console.log(" error en getModalDetalle:::", error);
-            await page.screenshot({ path: './error.png' });
+            try {
+                await page.screenshot({ path: './error.png' });
+            } catch (error) {}
             throw error;
 
         }
