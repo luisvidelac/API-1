@@ -1,0 +1,13 @@
+use pjud;
+db.getCollection("causaapelaciones").drop();
+db.getCollection("causaciviles").drop();
+db.getCollection("causacobranzas").drop();
+db.getCollection("causafamilias").drop();
+db.getCollection("causalaborales").drop();
+db.getCollection("causasupremas").drop();
+db.getCollection("doctoapelaciones").drop();
+db.getCollection("doctociviles").drop();
+db.getCollection("doctocobranzas").drop();
+db.getCollection("doctofamilias").drop();
+db.getCollection("doctolaborales").drop();
+db.getCollection("doctosupremas").drop();
