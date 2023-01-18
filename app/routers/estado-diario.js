@@ -287,10 +287,13 @@ router.post("/obtener_estado", async(req, res) => {
         });
         console.log('inicio de proceso puppeteer');
         let causas = [];
+        let encontroCausas = false;
 
         if (!total) {
             console.log('inicio de proceso por competencia');
-            causas = await procesoPrincipal(competencia, causas, fechas);
+            let salida = await procesoPrincipal(competencia, causas, fechas, encontroCausas);
+            causas = salida.causas;
+            encontroCausas = salida.encontroCausas;
         } else {
             console.log('inicio de proceso carga de totales');
             causas = await procesoTodasCausas(competencias, fechas, peticion.usuario);
@@ -299,8 +302,8 @@ router.post("/obtener_estado", async(req, res) => {
         const end = parseHrtimeToSeconds(process.hrtime(start))
         console.info(`Tiempo de ejecución ${end} ms`);
 
-        res.json({
-            status: 200,
+        res.status(encontroCausas ? 200 : 204).json({
+            status: encontroCausas ? 200 : 204,
             msg: `OK`,
             data: causas
         })
@@ -430,7 +433,7 @@ router.post("/obtener_estado", async(req, res) => {
         return causas;
     }
 
-    async function procesoPrincipal(competencia, causas, fechas) {
+    async function procesoPrincipal(competencia, causas, fechas, encontroCausas) {
         for await (const fecha of fechas) {
 
             peticion.fecha = fecha;
@@ -443,11 +446,13 @@ router.post("/obtener_estado", async(req, res) => {
             console.log('causas total rows:::', rows);
             let paginas = 0;
             if (rows > 1) {
-
                 let obj = await obtenerCausas(competencia, true, fecha);
                 let objcausas = obj.causas;
                 paginas = obj.paginas;
                 causaTitle = obj.causaTitle;
+                if (objcausas.length > 0) {
+                    encontroCausas = true;
+                }
 
                 if (competencia.nombre === "suprema") {
                     let causasfilter = await getCausasSupremaBD(objcausas);
@@ -585,7 +590,7 @@ router.post("/obtener_estado", async(req, res) => {
 
         }
 
-        return causas;
+        return { causas, encontroCausas };
 
     }
 
