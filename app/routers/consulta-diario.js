@@ -362,21 +362,27 @@ router.post("/obtener_causa", async(req, res) => {
 
         let causas = [];
         if (peticion.competencia === 'suprema') {
+            delete peticion.competencia;
             causas = await causaSupremaModel.find(peticion);
         }
         if (peticion.competencia === 'apelaciones') {
+            delete peticion.competencia;
             causas = await causaApelacionesModel.find(peticion);;
         }
         if (peticion.competencia === 'civil') {
+            delete peticion.competencia;
             causas = await causaCivilesModel.find(peticion);
         }
         if (peticion.competencia === 'laboral') {
+            delete peticion.competencia;
             causas = await causaLaboralesModel.find(peticion);
         }
         if (peticion.competencia === 'cobranza') {
+            delete peticion.competencia;
             causas = await causaCobranzaModel.find(peticion);
         }
         if (peticion.competencia === 'familia') {
+            delete peticion.competencia;
             causas = await causaFamiliaModel.find(peticion);
         }
         if (causas && causas.length > 0) {
