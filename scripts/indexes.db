@@ -127,6 +127,7 @@ db.getCollection('causaapelaciones').createIndex(
 db.getCollection('doctoapelaciones').createIndex(
   {
     "N° Ingreso": 1,
+    "Ubicación": 1,
     "Corte": 1,
     "Caratulado": 1,
     "FechaEstDia": 1,
