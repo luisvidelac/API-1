@@ -1424,7 +1424,7 @@ router.post("/obtener_estado", async(req, res) => {
             const causas = await causaApelacionesModel.find(consulta);
 
             for await (const causa of causas) {
-                let bus = causaspjud.find(c => c["N° Ingreso"] === causa["N° Ingreso"] && c["Fecha Ingreso"] === causa["Fecha Ingreso"] && c.Ubicacion === causa.Ubicacion && c["Fecha Ubicación"] === causa["Fecha Ubicación"] && c.Corte === causa.Corte && c.Caratulado === causa.Caratulado);
+                let bus = causaspjud.find(c => c["N° Ingreso"] === causa["N° Ingreso"] && c["Fecha Ingreso"] === causa["Fecha Ingreso"] && c["Ubicación"] === causa["Ubicación"] && c["Fecha Ubicación"] === causa["Fecha Ubicación"] && c.Corte === causa.Corte && c.Caratulado === causa.Caratulado);
                 if (bus) {
                     retorno.push({ Detalle: causa.Detalle, "N° Ingreso": causa["N° Ingreso"], "Fecha Ingreso": causa["Fecha Ingreso"], "Ubicación": causa["Ubicación"], "Fecha Ubicación": causa["Fecha Ubicación"], Corte: causa.Corte, Caratulado: causa.Caratulado, uuid: causa.uuid });
                 }

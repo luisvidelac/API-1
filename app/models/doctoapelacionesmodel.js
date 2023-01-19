@@ -6,6 +6,7 @@ const schema = mongoose.Schema({
     "base64": String,
     "url": String,
     "N° Ingreso": String,
+    "Ubicación": String,
     "Corte": String,
     "Caratulado": String,
     "FechaEstDia": String,
