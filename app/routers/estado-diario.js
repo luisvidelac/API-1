@@ -3008,9 +3008,9 @@ router.post("/obtener_estado", async(req, res) => {
                                     let doctos = [];
                                     let obj = {};
                                     if (competencia.nombre === 'civil') {
-                                        obj = { Rit: detcausa.Rit, Ruc: detcausa.Ruc, Caratulado: detcausa.Caratulado, Tribunal: detcausa.Tribunal };
-                                    } else if (competencia.nombre === 'cobranza') {
                                         obj = { Rol: detcausa.Rol, Caratulado: detcausa.Caratulado, Tribunal: detcausa.Tribunal };
+                                    } else if (competencia.nombre === 'cobranza') {
+                                        obj = { Rit: detcausa.Rit, Ruc: detcausa.Ruc, Caratulado: detcausa.Caratulado, Tribunal: detcausa.Tribunal };
                                     }
                                     let docto = { uuid: uuid, url: config.url + doc.url, contentype: base64encoding.split('|')[0], base64: base64encoding.split('|')[1], usuario: usuario, ...obj };
 
@@ -3129,9 +3129,9 @@ router.post("/obtener_estado", async(req, res) => {
                                     let doctos = [];
                                     let obj = {};
                                     if (competencia.nombre === 'suprema') {
-                                        obj = { "N° Ingreso": detcausa["N° Ingreso"], "Ubicación": detcausa["Ubicación"], "Corte": detcausa.Corte, "Caratulado": detcausa.Caratulado };
-                                    } else if (competencia.nombre === 'apelaciones') {
                                         obj = { "N° Ingreso": detcausa["N° Ingreso"], "Tipo Recurso": detcausa["Tipo Recurso"], "Caratulado": detcausa.Caratulado };
+                                    } else if (competencia.nombre === 'apelaciones') {
+                                        obj = { "N° Ingreso": detcausa["N° Ingreso"], "Ubicación": detcausa["Ubicación"], "Corte": detcausa.Corte, "Caratulado": detcausa.Caratulado };
                                     } else if (competencia.nombre === 'familia' || competencia.nombre === 'laboral') {
                                         obj = { "Rit": detcausa["Rit"], "Ruc": detcausa["Ruc"], "Tribunal": detcausa["Tribunal"], "Caratulado": detcausa["Caratulado"] };
                                     }
