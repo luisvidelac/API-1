@@ -16,8 +16,11 @@ const config = {
     launchConf: {
         headless: false,
         args: [
+            '--single-process',
+            '--no-zygote',
             '--no-sandbox',
             '--disable-setuid-sandbox',
+            '--disable-seccomp-filter-sandbox',
             '--disable-accelerated-2d-canvas',
             '--disable-gpu',
             '--use-gl=egl',
