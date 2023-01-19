@@ -297,6 +297,7 @@ router.post("/obtener_estado", async(req, res) => {
         } else {
             console.log('inicio de proceso carga de totales');
             causas = await procesoTodasCausas(competencias, fechas, peticion.usuario);
+            encontroCausas = true;
         }
 
         const end = parseHrtimeToSeconds(process.hrtime(start))
