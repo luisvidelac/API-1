@@ -303,8 +303,8 @@ router.post("/obtener_estado", async(req, res) => {
         const end = parseHrtimeToSeconds(process.hrtime(start))
         console.info(`Tiempo de ejecución ${end} ms`);
 
-        res.status(encontroCausas ? 200 : 204).json({
-            status: encontroCausas ? 200 : 204,
+        res.status(encontroCausas ? 200 : 201).json({
+            status: encontroCausas ? 200 : 201,
             msg: `OK`,
             data: causas
         })
