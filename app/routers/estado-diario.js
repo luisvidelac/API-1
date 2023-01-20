@@ -1640,11 +1640,21 @@ router.post("/obtener_estado", async(req, res) => {
                     reject(dialog.message());
                 })
                 await timeout(1000);
-                await page.waitForXPath('//*[@id="sidebar"]/ul/li[4]/a');
-                const elements = await page.$x('//*[@id="sidebar"]/ul/li[4]/a');
-                await elements[0].click();
-                await timeout(1000);
-                resolve("ok");
+                try {
+                    await page.waitForXPath('//*[@id="sidebar"]/ul/li[4]/a');
+                    const elements = await page.$x('//*[@id="sidebar"]/ul/li[4]/a');
+                    await elements[0].click();
+                    await timeout(1000);
+                    resolve("ok");
+                } catch (error) {
+                    console.log("error loginEstadoDiario:", error);
+                    if (page.url() === config.homeUrl) {
+                        reject(error);
+                    } else {
+                        console.log('No paso login. Posible bloqueo de ip');
+                        reject('No paso login. Posible bloqueo de ip');
+                    }
+                }
             } catch (error) {
                 console.log("error loginEstadoDiario:", error);
                 reject(error);
