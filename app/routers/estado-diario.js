@@ -1500,7 +1500,7 @@ router.post("/obtener_estado", async(req, res) => {
         }
     }
 
-    async function getCausasCobranzaBD(causaspjud) {
+    async function getCausasCobranzaBD(causaspjud, receptor) {
         const retorno = [];
         try {
 
@@ -2413,10 +2413,6 @@ router.post("/obtener_estado", async(req, res) => {
                     row['detalle'] = tabs;
                     console.log("despues de abrir detalle");
 
-                    if (receptor) {
-                        await timeout(1000);
-                    }
-
                     await page.waitForSelector(`${modalSelector} > div > div > div.modal-footer > button`, {
                         visible: true
                     });
@@ -2510,10 +2506,6 @@ router.post("/obtener_estado", async(req, res) => {
                     row['detalle'] = tabs;
                     console.log("despues de abrir detalle");
 
-                    if (receptor) {
-                        await timeout(1000);
-                    }
-
                     await page.waitForSelector(`${modalSelector} > div > div > div.modal-footer > button`, {
                         visible: true
                     });
@@ -2606,10 +2598,6 @@ router.post("/obtener_estado", async(req, res) => {
                     let tabs = await getModalDetalle(competencia, modalSelector, row, usuario, tabfilter);
                     row['detalle'] = tabs;
                     console.log("despues de abrir detalle");
-
-                    if (receptor) {
-                        await timeout(1000);
-                    }
 
                     await page.waitForSelector(`${modalSelector} > div > div > div.modal-footer > button`, {
                         visible: true
@@ -2722,12 +2710,13 @@ router.post("/obtener_estado", async(req, res) => {
                         row['receptores'] = receptores;
 
                         await timeout(1000);
-                    }
+                    } else {
 
-                    console.log("antes de abrir cuaderno");
-                    let cuaderno = await getModalCombo(competencia, modalSelector, row, usuario);
-                    row['cuadernos'] = cuaderno;
-                    console.log("despues de abrir cuaderno");
+                        console.log("antes de abrir cuaderno");
+                        let cuaderno = await getModalCombo(competencia, modalSelector, row, usuario);
+                        row['cuadernos'] = cuaderno;
+                        console.log("despues de abrir cuaderno");
+                    }
 
                     if (receptor) {
                         await timeout(1000);
@@ -2826,16 +2815,11 @@ router.post("/obtener_estado", async(req, res) => {
                     row['detalle'] = tabs;
                     console.log("despues de abrir detalle");
 
-                    if (receptor) {
-                        await timeout(1000);
-                    }
-
                     await page.waitForSelector(`${modalSelector} > div > div > div.modal-footer > button`, {
                         visible: true
                     });
 
                     await page.click(`${modalSelector} > div > div > div.modal-footer > button`);
-
 
                     row['FechaEstDia'] = fecha;
 
