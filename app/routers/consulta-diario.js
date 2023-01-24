@@ -248,21 +248,27 @@ router.post("/obtener_documento", async(req, res) => {
 
         let document;
         if (peticion.competencia === 'suprema') {
+            delete peticion.competencia;
             document = await doctoSupremaModel.findOne({ uuid: peticion.uuid });
         }
         if (peticion.competencia === 'apelaciones') {
+            delete peticion.competencia;
             document = await doctoApelacionesModel.findOne({ uuid: peticion.uuid });
         }
         if (peticion.competencia === 'civil') {
+            delete peticion.competencia;
             document = await doctoCivilesModel.findOne({ uuid: peticion.uuid });
         }
         if (peticion.competencia === 'laboral') {
+            delete peticion.competencia;
             document = await doctoLaboralesModel.findOne({ uuid: peticion.uuid });
         }
         if (peticion.competencia === 'cobranza') {
+            delete peticion.competencia;
             document = await doctoCobranzaModel.findOne({ uuid: peticion.uuid });
         }
         if (peticion.competencia === 'familia') {
+            delete peticion.competencia;
             document = await doctoFamiliaModel.findOne({ uuid: peticion.uuid });
         }
         if (document) {
