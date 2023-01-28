@@ -2732,10 +2732,10 @@ router.post("/obtener_estado", async(req, res) => {
                     break;
                 } catch (error) {
                     intentos++;
+                    console.log("error openRowModal 3:::", error, " intento:".intentos);
                     if (intentos > 3) {
                         break;
                     }
-                    console.log("error openRowModal 3:::", error);
                     try {
                         await page.screenshot({ path: './error.png' });
                     } catch (error) {}
