@@ -1940,9 +1940,10 @@ router.post("/obtener_estado", async(req, res) => {
                     reload = true;
                     break;
                 }
-                modalContent.updated_at = Date.now();
                 if (receptor) {
                     modalContent.updated_at_receptores = Date.now();
+                } else {
+                    modalContent.updated_at = Date.now();
                 }
                 if (competencia.nombre === 'civil') {
                     await insertUpdateCausasCiviles([modalContent], usuario);
