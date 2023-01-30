@@ -2970,8 +2970,12 @@ router.post("/obtener_estado", async(req, res) => {
                                     })
                                     return pdfs;
                                 } else {
-                                    const texto = col.textContent.trim()
-                                    return texto
+                                    const link = col.querySelector("label")
+                                    if (link) {
+                                        return { link: link.getAttribute("onclick"), text: col.innerText.trim() }
+                                    } else {
+                                        return col.innerText.trim()
+                                    }
                                 }
                             })
                         })
@@ -3017,6 +3021,13 @@ router.post("/obtener_estado", async(req, res) => {
                                     pdfs.push({ uuid: uuid, url: config.url + doc.url })
                                 }
                                 causa[title] = pdfs;
+                            } else if (title === 'Rol Destino') {
+                                await page.evaluate(`${row[i].link}`);
+                                //await timeout(1000);
+                                causa.detalleTramiteExhorto = await obtenerExhortos(detcausa, usuario);
+                                await page.evaluate(() => { document.querySelector('#modalExhortoCivil').style.display = 'none'; });
+                                //await timeout(1000);
+                                causa[title] = row[i].text;
                             } else {
                                 causa[title] = row[i];
                             }
@@ -3051,6 +3062,78 @@ router.post("/obtener_estado", async(req, res) => {
             throw error;
 
         }
+
+    }
+
+    async function obtenerExhortos(detcausa, usuario) {
+        const titles = await page.evaluate(() => {
+            const rows = document.querySelectorAll('#modalExhortoCivil div div div.modal-body div div div table thead tr');
+            return Array.from(rows, row => {
+                const columns = row.querySelectorAll('th');
+                return Array.from(columns, column => column.innerText);
+            });
+        });
+        const result = await page.evaluate(() => {
+            const rows = document.querySelectorAll('#modalExhortoCivil div div div.modal-body div div div table tbody tr');
+            return Array.from(rows, row => {
+                const cols = row.querySelectorAll("td");
+                return Array.from(cols, col => {
+                    const docs = col.querySelectorAll("form");
+                    if (docs.length > 0) {
+                        const pdfs = [];
+
+                        docs.forEach(doc => {
+                            const url = doc.getAttribute("action");
+                            const name = doc.querySelector("input").name;
+                            const pdf = doc.querySelector("input").value;
+                            pdfs.push({ url: url + "?" + name + "=" + pdf });
+                        })
+                        return pdfs;
+                    } else {
+                        const texto = col.textContent.trim()
+                        return texto
+                    }
+                })
+            });
+        });
+        let exhortos = [];
+        if (result.length > 0) {
+            for await (const row of result) {
+                let causa = {};
+                for await (const [i, title] of titles[0].entries()) {
+                    if (title === 'Doc.') {
+                        let pdfs = [];
+                        for await (const doc of row[i]) {
+                            let uuid = uuidv4();
+                            let base64encoding = await getBase64FromUrl(config.url + doc.url);
+                            let doctos = [];
+                            let obj = {};
+                            if (competencia.nombre === 'civil') {
+                                obj = { Rol: detcausa.Rol, Caratulado: detcausa.Caratulado, Tribunal: detcausa.Tribunal };
+                            } else if (competencia.nombre === 'cobranza') {
+                                obj = { Rit: detcausa.Rit, Ruc: detcausa.Ruc, Caratulado: detcausa.Caratulado, Tribunal: detcausa.Tribunal };
+                            }
+                            let docto = { uuid: uuid, url: config.url + doc.url, contentype: base64encoding.split('|')[0], base64: base64encoding.split('|')[1], usuario: usuario, ...obj };
+
+                            docto.updated_at = Date.now();
+                            doctos.push(docto)
+                            if (competencia.nombre === 'civil') {
+                                await insertUpdateDoctosCiviles(doctos, usuario);
+                            }
+                            if (competencia.nombre === 'cobranza') {
+                                await insertUpdateDoctosCobranza(doctos, usuario);
+                            }
+                            pdfs.push({ uuid: uuid, url: config.url + doc.url })
+                        }
+                        causa[title] = pdfs;
+                    } else {
+                        causa[title] = row[i];
+                    }
+                }
+                exhortos.push(causa);
+            }
+        }
+        return exhortos;
 
     }
 
