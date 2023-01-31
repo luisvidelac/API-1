@@ -375,7 +375,8 @@ router.post("/obtener_estado", async(req, res) => {
         const causas = [];
         console.log('cargando pagina inicial de PJUD procesoTodasCausas');
         await page.goto(config.targeturi, {
-            waitUntil: 'networkidle2',
+            waitUntil: "domcontentloaded",
+            timeout: 60000
         });
         await loginEstadoDiario();
         for await (const fecha of fechas) {
@@ -701,7 +702,8 @@ router.post("/obtener_estado", async(req, res) => {
             try {
                 console.log('cargando pagina inicial de PJUD');
                 await page.goto(config.targeturi, {
-                    waitUntil: 'networkidle2',
+                    waitUntil: "domcontentloaded",
+                    timeout: 60000
                 });
 
                 await validateLogin(competencia);
