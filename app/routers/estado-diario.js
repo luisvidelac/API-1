@@ -2137,6 +2137,10 @@ router.post("/obtener_estado", async(req, res) => {
                     try {
                         await page.screenshot({ path: './error.png' });
                     } catch (error) {}
+                    reintento++;
+                    if (reintento > 3) {
+                        throw Error("no cambio de pagina");
+                    }
                     await validateLogin(competencia);
                     continue;
                 }
