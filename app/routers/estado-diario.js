@@ -302,15 +302,52 @@ router.post("/obtener_estado", async(req, res) => {
 
         const end = parseHrtimeToSeconds(process.hrtime(start))
         console.log(`Tiempo de ejecución ${end} ms`);
+        let continua = false;
+        switch (competencia.nombre) {
+            case 'suprema':
+                {
+                    continua = (await getDetalleSupremaBD(peticion.usuario)) > 0;
+                    break;
+                }
+            case 'apelaciones':
+                {
+                    continua = (await getDetalleApelacionesBD(peticion.usuario)) > 0;
+                    break;
+                }
+            case 'civil':
+                {
+                    continua = (await getCuadernosCivilesBD(peticion.usuario)) > 0;
+                    break;
+                }
+            case 'laboral':
+                {
+                    continua = (await getDetalleLaboralesBD(peticion.usuario)) > 0;
+                    break;
+                }
+            case 'cobranza':
+                {
+                    continua = (await getCuadernosCobranzaBD(peticion.usuario)) > 0;
+                    break;
+                }
+            case 'familia':
+                {
+                    continua = (await getDetalleFamiliaBD(peticion.usuario)) > 0;
+                    break;
+                }
+            default:
+                break;
+        }
         console.log(200, {
             status: encontroCausas ? 200 : 201,
             msg: `OK`,
-            data: causas && Array.isArray(causas) ? causas.length : causas
+            data: causas && Array.isArray(causas) ? causas.length : causas,
+            next: continua
         });
         res.status(200).json({
             status: encontroCausas ? 200 : 201,
             msg: `OK`,
-            data: causas
+            data: causas,
+            next: continua
         })
 
     } catch (error) {
@@ -1473,6 +1510,108 @@ router.post("/obtener_estado", async(req, res) => {
             return retorno;
         } catch (error) {
             console.log("error getCausasCivilesBD:", error);
+            throw error;
+        }
+    }
+
+    async function getDetalleSupremaBD(usuario) {
+        try {
+
+            const consulta = {
+                "$where": "this.detalle.length === 0",
+                "usuarios": usuario
+            };
+
+            const causas = await causaSupremaModel.find(consulta);
+
+            return causas.length;
+        } catch (error) {
+            console.log("error getDetalleSupremaBD:", error);
+            throw error;
+        }
+    }
+
+    async function getDetalleApelacionesBD(usuario) {
+        try {
+
+            const consulta = {
+                "$where": "this.detalle.length === 0",
+                "usuarios": usuario
+            };
+
+            const causas = await causaApelacionesModel.find(consulta);
+
+            return causas.length;
+        } catch (error) {
+            console.log("error getDetalleApelacionesBD:", error);
+            throw error;
+        }
+    }
+
+    async function getCuadernosCivilesBD(usuario) {
+        try {
+
+            const consulta = {
+                "$where": "this.cuadernos.length === 0",
+                "usuarios": usuario
+            };
+
+            const causas = await causaCivilesModel.find(consulta);
+
+            return causas.length;
+        } catch (error) {
+            console.log("error getCuadernosCivilesBD:", error);
+            throw error;
+        }
+    }
+
+    async function getDetalleLaboralesBD(usuario) {
+        try {
+
+            const consulta = {
+                "$where": "this.detalle.length === 0",
+                "usuarios": usuario
+            };
+
+            const causas = await causaLaboralesModel.find(consulta);
+
+            return causas.length;
+        } catch (error) {
+            console.log("error getDetalleLaboralesBD:", error);
+            throw error;
+        }
+    }
+
+    async function getCuadernosCobranzaBD(usuario) {
+        try {
+
+            const consulta = {
+                "$where": "this.cuadernos.length === 0",
+                "usuarios": usuario
+            };
+
+            const causas = await causaCobranzaModel.find(consulta);
+
+            return causas.length;
+        } catch (error) {
+            console.log("error getCuadernosCobranzaBD:", error);
+            throw error;
+        }
+    }
+
+    async function getDetalleFamiliaBD(usuario) {
+        try {
+
+            const consulta = {
+                "$where": "this.detalle.length === 0",
+                "usuarios": usuario
+            };
+
+            const causas = await causaFamiliaModel.find(consulta);
+
+            return causas.length;
+        } catch (error) {
+            console.log("error getDetalleFamiliaBD:", error);
             throw error;
         }
     }
