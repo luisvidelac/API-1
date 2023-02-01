@@ -367,12 +367,14 @@ router.post("/obtener_estado", async(req, res) => {
         console.log('palyload salida de error', {
             status: 500,
             msg: `Error`,
-            data: error.message ? error.message : error
+            data: error.message ? error.message : error,
+            next: true
         });
         res.status(500).json({
             status: 500,
             msg: `Error`,
-            data: error.message ? error.message : error
+            data: error.message ? error.message : error,
+            next: true
         });
     } finally {
         if (browser) {
