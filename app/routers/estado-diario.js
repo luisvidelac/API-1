@@ -254,6 +254,7 @@ router.post("/obtener_estado", async(req, res) => {
 
     const start = process.hrtime();
     console.log('iniciando proceso carga estado diario usuario:', peticion.usuario);
+    console.log('peticion', peticion);
     let browser;
     let page;
     try {
