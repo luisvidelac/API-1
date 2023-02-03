@@ -269,8 +269,7 @@ router.post("/obtener_estado", async(req, res) => {
         console.log('termino carga puppeteer');
 
         console.log('carga browser puppeteer');
-        //const page = await browser.newPage();
-        [page] = await browser.pages();
+        page = await browser.newPage();
         await page.setCacheEnabled(false);
         await page.setDefaultTimeout(config.timeout);
         await page.setDefaultNavigationTimeout(config.timeout);
@@ -304,39 +303,41 @@ router.post("/obtener_estado", async(req, res) => {
         const end = parseHrtimeToSeconds(process.hrtime(start))
         console.log(`Tiempo de ejecución ${end} ms`);
         let continua = false;
-        switch (competencia.nombre) {
-            case 'suprema':
-                {
-                    continua = (await getDetalleSupremaBD(peticion.usuario)) > 0;
+        if (!total) {
+            switch (competencia.nombre) {
+                case 'suprema':
+                    {
+                        continua = (await getDetalleSupremaBD(peticion.usuario)) > 0;
+                        break;
+                    }
+                case 'apelaciones':
+                    {
+                        continua = (await getDetalleApelacionesBD(peticion.usuario)) > 0;
+                        break;
+                    }
+                case 'civil':
+                    {
+                        continua = (await getCuadernosCivilesBD(peticion.usuario)) > 0;
+                        break;
+                    }
+                case 'laboral':
+                    {
+                        continua = (await getDetalleLaboralesBD(peticion.usuario)) > 0;
+                        break;
+                    }
+                case 'cobranza':
+                    {
+                        continua = (await getCuadernosCobranzaBD(peticion.usuario)) > 0;
+                        break;
+                    }
+                case 'familia':
+                    {
+                        continua = (await getDetalleFamiliaBD(peticion.usuario)) > 0;
+                        break;
+                    }
+                default:
                     break;
-                }
-            case 'apelaciones':
-                {
-                    continua = (await getDetalleApelacionesBD(peticion.usuario)) > 0;
-                    break;
-                }
-            case 'civil':
-                {
-                    continua = (await getCuadernosCivilesBD(peticion.usuario)) > 0;
-                    break;
-                }
-            case 'laboral':
-                {
-                    continua = (await getDetalleLaboralesBD(peticion.usuario)) > 0;
-                    break;
-                }
-            case 'cobranza':
-                {
-                    continua = (await getCuadernosCobranzaBD(peticion.usuario)) > 0;
-                    break;
-                }
-            case 'familia':
-                {
-                    continua = (await getDetalleFamiliaBD(peticion.usuario)) > 0;
-                    break;
-                }
-            default:
-                break;
+            }
         }
         console.log(200, {
             status: encontroCausas ? 200 : 201,
@@ -417,6 +418,8 @@ router.post("/obtener_estado", async(req, res) => {
 
     async function procesoTodasCausas(competencias, fechas, usuario) {
         const causas = [];
+        const dir = './downloads';
+        fs.readdirSync(dir).forEach(f => fs.rmSync(`${dir}/${f}`));
         console.log('cargando pagina inicial de PJUD procesoTodasCausas');
         await page.goto(config.targeturi, {
             waitUntil: "domcontentloaded",
@@ -432,6 +435,7 @@ router.post("/obtener_estado", async(req, res) => {
                 await consultaEstadoDiario(competencia);
                 console.log('iniciando consulta de competencia:', competencia.nombre, ' usuario:', peticion.usuario, ' fecha:', fecha);
                 let detalle = competencia.detalle;
+                await page.waitForSelector(detalle);
                 let rows = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
                 if (rows > 1) {
                     let { cantCausas } = await cantidadPaginas(competencia.detalle);
@@ -446,14 +450,14 @@ router.post("/obtener_estado", async(req, res) => {
             try {
                 let reintento = 0;
                 while (true) {
-                    let files = await readFiles('./downloads/');
+                    let files = await readFiles(dir + '/');
                     if (files.length > 0) {
                         for await (const file of files) {
                             const newFecha = fecha.replace(new RegExp('/', 'g'), '_');
                             if (file.filename.includes(usuario) && file.filename.includes(newFecha)) {
                                 base64 = file.contents;
                                 let filePath = file.filename;
-                                fs.unlinkSync('./downloads/' + filePath);
+                                fs.unlinkSync(dir + '/' + filePath);
                             }
                         }
                         break;
