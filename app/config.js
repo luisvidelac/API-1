@@ -15,22 +15,25 @@ const config = {
     },
     launchConf: {
         headless: false,
+        //        timeout: 0,
         args: [
-            '--single-process',
-            '--no-zygote',
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-seccomp-filter-sandbox',
-            '--disable-accelerated-2d-canvas',
-            '--disable-gpu',
-            '--use-gl=egl',
-            '--disable-site-isolation-trials',
-            '--disable-dev-shm-usage',
-            '--netifs-to-ignore=INTERFACE_TO_IGNORE'
-        ],
-        env: {
-            DISPLAY: process.env.DISPLAY
-        }
+                //            '--single-process',
+                //            '--no-zygote',
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-seccomp-filter-sandbox',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu',
+                '--use-gl=egl',
+                //            '--disable-site-isolation-trials',
+                '--disable-dev-shm-usage'
+                //,
+                //            '--netifs-to-ignore=INTERFACE_TO_IGNORE'
+            ]
+            //        ,
+            //        env: {
+            //            DISPLAY: process.env.DISPLAY
+            //        }
 
     }
 }

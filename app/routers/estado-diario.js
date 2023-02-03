@@ -260,7 +260,7 @@ router.post("/obtener_estado", async(req, res) => {
     try {
         console.log('inicio carga puppeteer');
         puppeteer.use(hidden());
-        console.log("DISPLAY:", process.env.DISPLAY);
+        //console.log("DISPLAY:", process.env.DISPLAY);
         browser = await puppeteer.launch({
             ignoreHTTPSErrors: true,
             executablePath: executablePath(),
@@ -422,7 +422,7 @@ router.post("/obtener_estado", async(req, res) => {
         fs.readdirSync(dir).forEach(f => fs.rmSync(`${dir}/${f}`));
         console.log('cargando pagina inicial de PJUD procesoTodasCausas');
         await page.goto(config.targeturi, {
-            waitUntil: "domcontentloaded",
+            waitUntil: "networkidle2",
             timeout: 60000
         });
         await loginEstadoDiario();
@@ -750,7 +750,7 @@ router.post("/obtener_estado", async(req, res) => {
             try {
                 console.log('cargando pagina inicial de PJUD');
                 await page.goto(config.targeturi, {
-                    waitUntil: "domcontentloaded",
+                    waitUntil: "networkidle2",
                     timeout: 60000
                 });
 
