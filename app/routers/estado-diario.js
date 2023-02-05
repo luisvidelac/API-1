@@ -430,17 +430,34 @@ router.post("/obtener_estado", async(req, res) => {
             peticion.fecha = fecha;
             const obj = {};
             for await (const competencia of competencias) {
-                await selectTabCompetencia(competencia);
-                console.log('consulta estado diario ' + competencia.nombre);
-                await consultaEstadoDiario(competencia);
-                console.log('iniciando consulta de competencia:', competencia.nombre, ' usuario:', peticion.usuario, ' fecha:', fecha);
-                let detalle = competencia.detalle;
-                await page.waitForSelector(detalle);
-                let rows = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
-                if (rows > 1) {
-                    let { cantCausas } = await cantidadPaginas(competencia.detalle);
-                    console.log('consulta de competencia:', competencia.nombre, ' usuario:', peticion.usuario, ' fecha:', fecha, ' cantidad:', cantCausas);
-                    obj[competencia.nombre] = cantCausas;
+                let reintento = 0;
+                while (true) {
+                    try {
+                        await selectTabCompetencia(competencia);
+                        console.log('consulta estado diario ' + competencia.nombre);
+                        await consultaEstadoDiario(competencia);
+                        console.log('iniciando consulta de competencia:', competencia.nombre, ' usuario:', peticion.usuario, ' fecha:', fecha);
+                        let detalle = competencia.detalle;
+                        await page.waitForSelector(detalle);
+                        let rows = (await page.evaluate((detalle) => { return Array.from(document.querySelectorAll(detalle)) }, detalle)).length;
+                        if (rows > 1) {
+                            let { cantCausas } = await cantidadPaginas(competencia.detalle);
+                            console.log('consulta de competencia:', competencia.nombre, ' usuario:', peticion.usuario, ' fecha:', fecha, ' cantidad:', cantCausas);
+                            obj[competencia.nombre] = cantCausas;
+                        }
+                        break;
+                    } catch (error) {
+                        console.log('error procesoTodasCausas:', error, ' reintento: ', reintento);
+                        try {
+                            await page.screenshot({ path: './error.png' });
+                        } catch (error) {}
+                        reintento++;
+                        if (reintento > 3) {
+                            throw error;
+                        }
+                        await validateLogin(competencia);
+                        continue;
+                    }
                 }
             }
             await page.waitForSelector('#BtnLoadExcelEstadoDiario');
