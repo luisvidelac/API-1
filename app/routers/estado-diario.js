@@ -3195,11 +3195,15 @@ router.post("/obtener_estado", async(req, res) => {
                                 }
                                 causa[title] = pdfs;
                             } else if (title === 'Rol Destino') {
+                                console.log("abrir modal exhorto");
                                 await page.evaluate(`${row[i].link}`);
                                 //await timeout(1000);
+                                console.log("recorrer modal exhortos");
                                 causa.detalleTramiteExhorto = await obtenerExhortos(detcausa, usuario);
+                                await page.waitForSelector('#modalExhortoCivil');
                                 await page.evaluate(() => { document.querySelector('#modalExhortoCivil').style.display = 'none'; });
                                 //await timeout(1000);
+                                console.log("termino modal exhorto");
                                 causa[title] = row[i].text;
                             } else {
                                 causa[title] = row[i];
@@ -3239,6 +3243,9 @@ router.post("/obtener_estado", async(req, res) => {
     }
 
     async function obtenerExhortos(detcausa, usuario) {
+        let exhortos = [];
+        console.log("obtener titulos exhortos");
+        await page.waitForSelector('#modalExhortoCivil div div div.modal-body div div div table thead tr', { visible: true, timeout: 10000 });
         const titles = await page.evaluate(() => {
             const rows = document.querySelectorAll('#modalExhortoCivil div div div.modal-body div div div table thead tr');
             return Array.from(rows, row => {
@@ -3246,67 +3253,73 @@ router.post("/obtener_estado", async(req, res) => {
                 return Array.from(columns, column => column.innerText);
             });
         });
-        const result = await page.evaluate(() => {
-            const rows = document.querySelectorAll('#modalExhortoCivil div div div.modal-body div div div table tbody tr');
-            return Array.from(rows, row => {
-                const cols = row.querySelectorAll("td");
-                return Array.from(cols, col => {
-                    const docs = col.querySelectorAll("form");
-                    if (docs.length > 0) {
-                        const pdfs = [];
+        console.log("obtener exhortos");
+        try {
+            await page.waitForSelector('#modalExhortoCivil div div div.modal-body div div div table tbody tr', { visible: true, timeout: 1000 });
+            const result = await page.evaluate(() => {
+                const rows = document.querySelectorAll('#modalExhortoCivil div div div.modal-body div div div table tbody tr');
+                return Array.from(rows, row => {
+                    const cols = row.querySelectorAll("td");
+                    return Array.from(cols, col => {
+                        const docs = col.querySelectorAll("form");
+                        if (docs.length > 0) {
+                            const pdfs = [];
 
-                        docs.forEach(doc => {
-                            const url = doc.getAttribute("action");
-                            const name = doc.querySelector("input").name;
-                            const pdf = doc.querySelector("input").value;
-                            pdfs.push({ url: url + "?" + name + "=" + pdf });
-                        })
-                        return pdfs;
-                    } else {
-                        const texto = col.textContent.trim()
-                        return texto
-                    }
-                })
-            });
-        });
-        let exhortos = [];
-        if (result.length > 0) {
-            for await (const row of result) {
-                let causa = {};
-                for await (const [i, title] of titles[0].entries()) {
-                    if (title === 'Doc.') {
-                        let pdfs = [];
-                        for await (const doc of row[i]) {
-                            let uuid = uuidv4();
-                            let base64encoding = await getBase64FromUrl(config.url + doc.url);
-                            let doctos = [];
-                            let obj = {};
-                            if (competencia.nombre === 'civil') {
-                                obj = { Rol: detcausa.Rol, Caratulado: detcausa.Caratulado, Tribunal: detcausa.Tribunal };
-                            } else if (competencia.nombre === 'cobranza') {
-                                obj = { Rit: detcausa.Rit, Ruc: detcausa.Ruc, Caratulado: detcausa.Caratulado, Tribunal: detcausa.Tribunal };
-                            }
-                            let docto = { uuid: uuid, url: config.url + doc.url, contentype: base64encoding.split('|')[0], base64: base64encoding.split('|')[1], usuario: usuario, ...obj };
-
-                            docto.updated_at = Date.now();
-                            doctos.push(docto)
-                            if (competencia.nombre === 'civil') {
-                                await insertUpdateDoctosCiviles(doctos, usuario);
-                            }
-                            if (competencia.nombre === 'cobranza') {
-                                await insertUpdateDoctosCobranza(doctos, usuario);
-                            }
-                            pdfs.push({ uuid: uuid, url: config.url + doc.url })
+                            docs.forEach(doc => {
+                                const url = doc.getAttribute("action");
+                                const name = doc.querySelector("input").name;
+                                const pdf = doc.querySelector("input").value;
+                                pdfs.push({ url: url + "?" + name + "=" + pdf });
+                            })
+                            return pdfs;
+                        } else {
+                            const texto = col.textContent.trim()
+                            return texto
                         }
-                        causa[title] = pdfs;
-                    } else {
-                        causa[title] = row[i];
+                    })
+                });
+            });
+            console.log("generar documentos exhorto");
+            if (result.length > 0) {
+                for await (const row of result) {
+                    let causa = {};
+                    for await (const [i, title] of titles[0].entries()) {
+                        if (title === 'Doc.') {
+                            let pdfs = [];
+                            for await (const doc of row[i]) {
+                                let uuid = uuidv4();
+                                let base64encoding = await getBase64FromUrl(config.url + doc.url);
+                                let doctos = [];
+                                let obj = {};
+                                if (competencia.nombre === 'civil') {
+                                    obj = { Rol: detcausa.Rol, Caratulado: detcausa.Caratulado, Tribunal: detcausa.Tribunal };
+                                } else if (competencia.nombre === 'cobranza') {
+                                    obj = { Rit: detcausa.Rit, Ruc: detcausa.Ruc, Caratulado: detcausa.Caratulado, Tribunal: detcausa.Tribunal };
+                                }
+                                let docto = { uuid: uuid, url: config.url + doc.url, contentype: base64encoding.split('|')[0], base64: base64encoding.split('|')[1], usuario: usuario, ...obj };
+
+                                docto.updated_at = Date.now();
+                                doctos.push(docto)
+                                if (competencia.nombre === 'civil') {
+                                    await insertUpdateDoctosCiviles(doctos, usuario);
+                                }
+                                if (competencia.nombre === 'cobranza') {
+                                    await insertUpdateDoctosCobranza(doctos, usuario);
+                                }
+                                pdfs.push({ uuid: uuid, url: config.url + doc.url })
+                            }
+                            causa[title] = pdfs;
+                        } else {
+                            causa[title] = row[i];
+                        }
                     }
+                    exhortos.push(causa);
                 }
-                exhortos.push(causa);
             }
+            return exhortos;
+        } catch (error) {
+            return exhortos;
         }
-        return exhortos;
 
     }
 
