@@ -2856,6 +2856,7 @@ router.post("/obtener_estado", async(req, res) => {
                     }
 
                     if (receptor) {
+                        console.log("antes de abrir receptor");
                         await timeout(1000);
                         await page.evaluate(() => { window.scrollBy(0, 0); });
                         await timeout(1000);
@@ -2880,6 +2881,7 @@ router.post("/obtener_estado", async(req, res) => {
                         row['receptores'] = receptores;
 
                         await timeout(1000);
+                        console.log("despues de abrir receptor");
                     } else {
 
                         console.log("antes de abrir cuaderno");
@@ -3040,28 +3042,38 @@ router.post("/obtener_estado", async(req, res) => {
             await page.waitForSelector(`${modal} > div > div > div.modal-body > div > div > div > center > div`, { visible: true, timeout: 10000 });
             return receptores;
         } catch (error) {
-            await page.waitForSelector(`${modal} > div > div > div.modal-body > div > div > div > table > tbody > tr`, { visible: true });
+            try {
+                await page.waitForSelector(`${modal} > div > div > div.modal-body > div > div > div > table > tbody > tr`, { visible: true });
 
-            const titleReceptores = await titulosReceptores(page);
-            let rowsReceptores = await page.$$eval(`${modal} > div > div > div.modal-body > div > div > div > table > tbody > tr`, rows => {
-                return Array.from(rows, row => {
-                    const columns = row.querySelectorAll('td');
-                    return Array.from(columns, col => {
-                        return col.innerText.trim()
-                    })
+                const titleReceptores = await titulosReceptores(page);
+                let rowsReceptores = await page.$$eval(`${modal} > div > div > div.modal-body > div > div > div > table > tbody > tr`, rows => {
+                    return Array.from(rows, row => {
+                        const columns = row.querySelectorAll('td');
+                        return Array.from(columns, col => {
+                            return col.innerText.trim()
+                        })
+                    });
                 });
-            });
 
-            for await (const receptor of rowsReceptores) {
-                let obj = {};
-                for await (const [i, title] of titleReceptores.entries()) {
-                    obj[title] = receptor[i];
+                for await (const receptor of rowsReceptores) {
+                    let obj = {};
+                    for await (const [i, title] of titleReceptores.entries()) {
+                        obj[title] = receptor[i];
+                    }
+                    if (Object.values(obj).length > 1) {
+                        receptores.push(obj);
+                    }
                 }
-                if (Object.values(obj).length > 1) {
-                    receptores.push(obj);
-                }
+                return receptores;
+            } catch (err) {
+                console.log(" error en getReceptores:::", err);
+                try {
+                    await page.screenshot({ path: './error.png' });
+                } catch (err2) {}
+                throw err;
+
             }
-            return receptores;
+
         }
 
     }
