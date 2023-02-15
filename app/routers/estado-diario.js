@@ -2092,10 +2092,10 @@ router.post("/obtener_estado", async(req, res) => {
             for await (const causa of result) {
                 await validateLogin(competencia);
                 console.log('procesando causa ', i, ' de ', total, ' detalle ', causa);
-                if (competencia.nombre === 'civil') {
+                if (competencia.nombre === 'civil' && !receptor) {
                     await deleteDoctosCiviles([causa]);
                 }
-                if (competencia.nombre === 'cobranza') {
+                if (competencia.nombre === 'cobranza' && !receptor) {
                     await deleteDoctosCobranza([causa]);
                 }
                 console.log("antes de abrir el modal");
