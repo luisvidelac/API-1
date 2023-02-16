@@ -1068,6 +1068,7 @@ router.post("/obtener_estado", async(req, res) => {
         }
     }
 
+    /*
     async function deleteDoctosSuprema(doctos) {
         try {
             const doctoDelete = doctos.map(docto => ({
@@ -1184,7 +1185,7 @@ router.post("/obtener_estado", async(req, res) => {
             console.log("error en deleteDoctosCobranza:", error);
             throw error;
         }
-    }
+    }*/
 
     async function insertUpdateDoctosSuprema(doctos, usuario) {
         try {
@@ -1984,7 +1985,7 @@ router.post("/obtener_estado", async(req, res) => {
             for await (const causa of result) {
                 await validateLogin(competencia);
                 console.log('procesando causa ', i, ' de ', total, ' detalle ', causa);
-                await deleteDoctosSuprema([causa]);
+                //await deleteDoctosSuprema([causa]);
                 console.log("antes de abrir el modal");
                 const modalContent = await openRowModalSuprema(competencia, causa, usuario, fecha);
                 console.log("despues de abrir el modal:", modalContent);
@@ -2020,7 +2021,7 @@ router.post("/obtener_estado", async(req, res) => {
             for await (const causa of result) {
                 await validateLogin(competencia);
                 console.log('procesando causa ', i, ' de ', total, ' detalle ', causa);
-                await deleteDoctosApelaciones([causa]);
+                //await deleteDoctosApelaciones([causa]);
                 console.log("antes de abrir el modal");
                 const modalContent = await openRowModalApelaciones(competencia, causa, usuario, fecha);
                 console.log("despues de abrir el modal:", modalContent);
@@ -2056,7 +2057,7 @@ router.post("/obtener_estado", async(req, res) => {
             for await (const causa of result) {
                 await validateLogin(competencia);
                 console.log('procesando causa ', i, ' de ', total, ' detalle ', causa);
-                await deleteDoctosFamilia([causa]);
+                //await deleteDoctosFamilia([causa]);
                 console.log("antes de abrir el modal");
                 const modalContent = await openRowModalFamilia(competencia, causa, usuario, fecha);
                 console.log("despues de abrir el modal:", modalContent);
@@ -2092,12 +2093,12 @@ router.post("/obtener_estado", async(req, res) => {
             for await (const causa of result) {
                 await validateLogin(competencia);
                 console.log('procesando causa ', i, ' de ', total, ' detalle ', causa);
-                if (competencia.nombre === 'civil' && !receptor) {
+                /*if (competencia.nombre === 'civil' && !receptor) {
                     await deleteDoctosCiviles([causa]);
                 }
                 if (competencia.nombre === 'cobranza' && !receptor) {
                     await deleteDoctosCobranza([causa]);
-                }
+                }*/
                 console.log("antes de abrir el modal");
                 const modalContent = await openRowModal(competencia, causa, usuario, fecha, receptor);
                 console.log("despues de abrir el modal:", modalContent);
@@ -2150,7 +2151,7 @@ router.post("/obtener_estado", async(req, res) => {
             for await (const causa of result) {
                 await validateLogin(competencia);
                 console.log('procesando causa ', i, ' de ', total, ' detalle ', causa);
-                await deleteDoctosLaborales([causa]);
+                //await deleteDoctosLaborales([causa]);
                 console.log("antes de abrir el modal");
                 const modalContent = await openRowModalLaborales(competencia, causa, usuario, fecha);
                 console.log("despues de abrir el modal:", modalContent);
